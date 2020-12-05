@@ -1,0 +1,111 @@
+---
+title: "Getting Data"
+author: "Chris Shin"
+date: "12/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, eval = F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This document will walk through the process of how we downloaded the data for this project.
+
+``` {r add libraries, eval = F}
+library (here) #for ease of accessing files within the project
+library (readr) #to open the downloaded data
+library (dplyr) #to manipulate datasets
+library (tidyr) #to manipulate datasets
+
+here::set_here() #run this at the top of your script to tell R studio that every file you use will be based from the Rproj folder
+```
+
+
+
+``` {r initial load of all datasets, eval = F}
+tvshows <- readr::read_csv (here::here("data-raw/tvshows.csv"))
+
+movies <- readr::read_csv (here::here("data-raw/movies.csv"))
+
+# from https://datasets.imdbws.com/, "title.basics.tsv.gz"
+# need this dataset to match movie titles to actors
+titles <- readr::read_tsv (here::here("data-raw/imdbtitles.tsv"),
+                           na = "\\N",
+                           col_types = "ccccliiic") 
+
+# from https://datasets.imdbws.com/, "name.basics.tsv.gz"
+actors <- readr::read_tsv (here::here("data-raw/imdbactors.tsv"),
+                           na = "\\N",
+                           col_types = "cciicc") 
+
+# from https://datasets.imdbws.com/, "title.akas.tsv.gz "
+# need this dataset to get metadata (eg country)
+metadata <-  readr::read_tsv (here::here("data-raw/imdbmetadata.tsv")) 
+
+save(tvshows, movies, titles, actors, metadata, file = here::here("data/data_all.rda")) 
+
+```
+
+
+``` {r merging and saving only necessary entries from imdb datasets, eval = F}
+load(file = here::here("data/data_all.rda"))
+
+#1: add tv shows and movies to one joint dataset dat
+tvshows <- tvshows %>%
+  select (-1) %>% #remove column of row numbers
+  rename (Type = type,
+          RottenTomatoes = "Rotten Tomatoes",
+          PrimeVideo = "Prime Video")
+
+movies <- movies %>%
+  select (-1) %>% #remove column of row numbers 
+  rename (RottenTomatoes = "Rotten Tomatoes",
+          PrimeVideo = "Prime Video") %>%
+  select (names(tvshows))
+
+dat <- rbind (tvshows, movies)
+
+#2: filter for titles and metadata in dat and join with dat
+titles1 <- titles %>%
+  filter (primaryTitle %in% dat$Title | originalTitle %in% dat$Title) %>%
+  select (tconst, titleType, primaryTitle,  runtimeMinutes, genres) %>%
+  left_join (metadata, by = c("primaryTitle" = "title")) %>%
+  filter (tconst == titleId) %>%
+  mutate_if(is.character, list(~na_if(., "\\N")))
+
+
+
+
+merged_regions = aggregate(titles1$region, list(titles1$primaryTitle), paste, collapse=",")
+merged_languages = aggregate(titles1$language, list(titles1$primaryTitle), paste, collapse=",")
+tomerge = inner_join (merged_regions, merged_languages, by = "Group.1")
+titles1 = left_join (titles1, tomerge, by = c("primaryTitle" = "Group.1")) %>%
+  select (-c(region, language)) %>%
+  rename (region = x.x,
+          language = x.y)
+
+dat <- left_join (dat, titles1, by = c("Title" = "primaryTitle")) #need to check that this is accurate
+
+#3: pivot_wider on actors to separate arrays in "knownForTitles" column
+actors = actors %>%
+  tidyr::separate(knownForTitles, into = c("1", "2", "3", "4", "5", "6"))
+
+
+actors = tidyr::pivot_longer(actors, 
+                             cols = c("1", "2", "3", "4", "5", "6"),
+                             names_to = "NA",
+                             values_to = "title") %>%
+  rename (tconst = title) %>%
+  select (primaryName,
+          birthYear,
+          deathYear,
+          primaryProfession,
+          tconst) %>%
+  filter (tconst %in% dat$tconst)
+
+save(dat, actors, file = here::here("data/data_clean.rda")) 
+```
+
+``` {r to load clean dataset}
+load (file = here::here("data/data_clean.rda"))
+
+```
