@@ -10,37 +10,57 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 This document will walk through the process of how we downloaded the data for this project.
 
-``` {r add libraries, eval = F}
+``` {r add base libraries, eval = F, echo = F}
 library (here) #for ease of accessing files within the project
 library (readr) #to open the downloaded data
 library (dplyr) #to manipulate datasets
 library (tidyr) #to manipulate datasets
 
 here::set_here() #run this at the top of your script to tell R studio that every file you use will be based from the Rproj folder
+
+dir.create(here::here("data"))
+dir.create(here::here("data-raw"))
+```
+
+
+``` {r downloading kaggle datasets copied to googlesheets, eval = F}
+#1. install these if you haven't and load them into your environment
+install.packages ("googlesheets4")
+install.packages ("googledrive")
+
+#2. uncomment the following line, replace the email in the second line with your own email, run the three lines following the prompts through the browser, and recomment the following line 
+# options(gargle_oauth_cache = ".secrets")
+googledrive::drive_auth(cache = ".secrets", email = "shincd@umich.edu")
+googlesheets4::gs4_auth(token = drive_token())
+
+#3. read in the movie dataset
+movies <- googlesheets4::read_sheet ("https://docs.google.com/spreadsheets/d/15A3ofKS3vitNCqUmfGYG7cnya6mjiCOaHfl6yXzq9y8/edit?urlBuilderDomain=umich.edu#gid=0")
+
+#4. read in the tv show dataset
+tvshows <- googlesheets4::read_sheet ("https://docs.google.com/spreadsheets/d/1FJEMSsNcsDpAs4itkThBsDHZjKx1qTNV3GyG9p26qSk/edit?urlBuilderDomain=umich.edu#gid=0")
+
+```
+
+``` {r downloading imdb datasets, eval = F}
+
+# from https://datasets.imdbws.com/, "title.basics.tsv.gz"
+# need this dataset to match movie titles to actors
+download.file ("https://datasets.imdbws.com/title.basics.tsv.gz", here::here("data-raw/titles.tsv.gz"))
+titles <- readr::read_tsv (here::here("titles.tsv.gz"))
+
+# from https://datasets.imdbws.com/, "name.basics.tsv.gz"
+download.file ("https://datasets.imdbws.com/name.basics.tsv.gz", here::here("data-raw/actors.tsv.gz"))
+actors <- readr::read_tsv (here::here("data-raw/actors.tsv.gz"))
+
+# from https://datasets.imdbws.com/, "title.akas.tsv.gz "
+# need this dataset to get metadata (eg country)
+download.file ("https://datasets.imdbws.com/title.akas.tsv.gz", here::here("data-raw/metadata.tsv.gz") )
+metadata <- readr::read_tsv (here::here("data-raw/metadata.tsv.gz") )
 ```
 
 
 
-``` {r initial load of all datasets, eval = F}
-tvshows <- readr::read_csv (here::here("data-raw/tvshows.csv"))
-
-movies <- readr::read_csv (here::here("data-raw/movies.csv"))
-
-# from https://datasets.imdbws.com/, "title.basics.tsv.gz"
-# need this dataset to match movie titles to actors
-titles <- readr::read_tsv (here::here("data-raw/imdbtitles.tsv"),
-                           na = "\\N",
-                           col_types = "ccccliiic") 
-
-# from https://datasets.imdbws.com/, "name.basics.tsv.gz"
-actors <- readr::read_tsv (here::here("data-raw/imdbactors.tsv"),
-                           na = "\\N",
-                           col_types = "cciicc") 
-
-# from https://datasets.imdbws.com/, "title.akas.tsv.gz "
-# need this dataset to get metadata (eg country)
-metadata <-  readr::read_tsv (here::here("data-raw/imdbmetadata.tsv")) 
-
+```{r save raw data files, eval = F}
 save(tvshows, movies, titles, actors, metadata, file = here::here("data/data_all.rda")) 
 
 ```
