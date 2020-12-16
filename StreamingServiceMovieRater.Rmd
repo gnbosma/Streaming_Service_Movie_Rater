@@ -1,0 +1,12 @@
+---
+title: "Streaming Service Movie Rater"
+author: "Chris Shin, Dylan Clark-Boucher, Grace Bosma"
+date: "11/21/2020"
+output: pdf_document
+---
+
+```{r, include= FALSE}
+library(pacman)
+pacman::p_load(tidyr, dplyr)
+```
+
