@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+<<<<<<< HEAD
+=======
+.secrets
+>>>>>>> f50133669ef573d77344b21c5359a5d40e41155e
