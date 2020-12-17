@@ -35,7 +35,7 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
                         choices = list("All" = "all", "7+" = "7+", 
                                        "13+" = "13+", "16+" = "16+",
                                        "18+" = "18+"), 
-                        selected = c("All","7+","13+","16+","18+")),
+                        selected = c("all","7+","13+","16+","18+")),
             
             sliderInput("yr",label = "Release year",
                         min = 1901,
