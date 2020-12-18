@@ -15,7 +15,7 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
     # Application title
     titlePanel("Streaming Service Movie Rater"),
 
-    # Sidebar with a slider input for number of bins
+    # Sidebar with user input
     sidebarLayout(
 
         sidebarPanel(
@@ -55,13 +55,14 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
                                        "Green" = "seagreen4",
                                        "Orange" = "sienna2",
                                        "Purple" = "orchid4"), 
-                        selected = "Blue")
+                        selected = "orchid4")
             
         ),
         
         # Show a plot of the generated distribution
-        mainPanel(tags$h2("IMBd Popular Score"),
-            plotOutput("histplot")
+        mainPanel(tags$h2("IMDb Popular Score"),
+            plotOutput("histplot"),
+            tags$p("Histogram of IMDb Ratings among selected movies and TV shows.")
         )
     )
 ))

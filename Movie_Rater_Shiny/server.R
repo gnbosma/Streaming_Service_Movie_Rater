@@ -9,15 +9,20 @@
 
 library(shiny)
 library(shinythemes)
+library(tidyverse)
+library(ggpubr)
 
 #Choose the location of data in your files. Too big to go on github
-#load("C:\Users\dc48b\Dropbox (University of Michigan)\BIOS 625 - Big Data Computing\FinalProject\data\data_clean.rda")
+load("C:/Users/dc48b/Dropbox (University of Michigan)/BIOS 625 - Big Data Computing/FinalProject/data/data_clean.rda")
 
 titles <- dat %>% 
     distinct(Title,.keep_all = T) %>% 
     mutate(RottenTomatoes = RottenTomatoes * 100) %>% 
     filter(!is.na(IMDb),!is.na(RottenTomatoes))
 
+#Function to check whether inputted x falls into given range
+    #Input: vector x, length-2 vector of lower, upper limit
+    #Output: logical vector same length as x
 inRange <- function(x,range){
     x <- as.numeric(x)
     range <- as.numeric(range)
@@ -48,13 +53,22 @@ shinyServer(function(input, output) {
         }
         
         #Create histogram
-        ggplot(plot_data) + 
+        ph <- ggplot(plot_data) + 
             geom_histogram(mapping = aes(x = IMDb), 
                            bins = nbins, color = "white",
                            fill = input$color) +
-            labs(y = "Count", x = "Movie Rating") + 
+            labs(y = "Count", x = "") + 
             xlim(0,10) +
             theme_minimal()
+        
+        pb <- ggplot(plot_data) + 
+            geom_boxplot(mapping = aes(x = IMBb), color = "gray91",
+                         fill = input$color) +
+            labs(x = "IMDb Rating") +
+            xlim(0,10) +
+            theme_minimal()
+        
+        ggarrange(ph,pb,ncol = 1, nrow = 2)
 
     })
 
