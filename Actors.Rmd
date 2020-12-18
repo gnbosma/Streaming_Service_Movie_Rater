@@ -29,12 +29,23 @@ data <- data %>% separate(primaryProfession, c("P1","P2", "P3"))
 #filter out those that are not an actor or actress as one of their 3 roles
 actors <- data %>% filter(P1 == 'actor' | P1 == 'actress' | P2 == 'actor' | P2 == 'actress' | P3 == 'actor' | P3 == 'actress' )
 
+# number of movies associated with actor/actress
 actors$num_titles <- rowSums( !is.na(actors[,8:11]))
+
+# below creates indicator variables for producer, writer, directors
+actors$prod <- ifelse(actors$P1 == 'producer' & !is.na(actors$P1)  | actors$P2 == 'producer' & !is.na(actors$P2)| actors$P3 == 'producer' & !is.na(actors$P3), 1,0)
+
+actors$writer <- ifelse(actors$P1 == 'writer' & !is.na(actors$P1)  | actors$P2 == 'writer' & !is.na(actors$P2)| actors$P3 == 'writer' & !is.na(actors$P3), 1,0)
+
+actors$dir <- ifelse(actors$P1 == 'director' & !is.na(actors$P1)  | actors$P2 == 'director' & !is.na(actors$P2)| actors$P3 == 'director' & !is.na(actors$P3), 1,0)
+
+# additional role variable (sum of director, writer, producer indicator variables)
+actors$add_role <- actors$prod + actors$writer + actors$dir
 ```
 
-# Producers
-```{r}
-producers <- data %>% filter(P1 == 'actor' | P2 == 'director' | P3 == 'producer' )
+# Directors 
+```{R}
+directors <- data %>% filter(P1 == 'director' | P2 == 'director' | P3 == 'director')
 ```
 
 # By Title 
@@ -43,7 +54,6 @@ title <- data %>% select(nconst, primaryName, T1, T2, T3, T4)
 title <- as.data.frame(title)[1:100,]
 title <- melt(title, id = c("nconst", "primaryName"))
 title <- title[order(title$value),]
-title2 <- title %>% group_by(value) %>% summarise(num_actors = n())
+title <- title %>% group_by(value) %>% summarise(num_actors = n())
 ```
-
 
