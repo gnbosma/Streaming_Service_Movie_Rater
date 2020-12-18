@@ -1,0 +1,49 @@
+---
+title: "Actors"
+author: "Grace Bosma"
+date: "12/17/2020"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(tidyr)
+library(reshape)
+```
+
+# Getting Started 
+```{r}
+# read in dataset 
+download.file ("https://datasets.imdbws.com/name.basics.tsv.gz",here::here("data-raw/actors.tsv.gz"))
+
+# Save locally and only include complete cases
+data_orig <- readr::read_tsv(here::here("data-raw/actors.tsv.gz"), )
+data <- data_orig[complete.cases(data_orig), ]
+
+# split "KnownForTitles" and PrimaryProession columns so we have 1 item per cell 
+data <- data %>% separate(knownForTitles, c("T1","T2", "T3", "T4"))
+data <- data %>% separate(primaryProfession, c("P1","P2", "P3"))
+```
+
+# Actors 
+```{r}
+#filter out those that are not an actor or actress as one of their 3 roles
+actors <- data %>% filter(P1 == 'actor' | P1 == 'actress' | P2 == 'actor' | P2 == 'actress' | P3 == 'actor' | P3 == 'actress' )
+
+actors$num_titles <- rowSums( !is.na(actors[,8:11]))
+```
+
+# Producers
+```{r}
+producers <- data %>% filter(P1 == 'actor' | P2 == 'director' | P3 == 'producer' )
+```
+
+# By Title 
+```{r}
+title <- data %>% select(nconst, primaryName, T1, T2, T3, T4)
+title <- as.data.frame(title)[1:100,]
+title <- melt(title, id = c("nconst", "primaryName"))
+title <- title[order(title$value),]
+title2 <- title %>% group_by(value) %>% summarise(num_actors = n())
+```
+
+
