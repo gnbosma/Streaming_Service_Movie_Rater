@@ -13,7 +13,7 @@ library(tidyverse)
 library(ggpubr)
 
 #Choose the location of data in your files. Too big to go on github
-load("C:/Users/dc48b/Dropbox (University of Michigan)/BIOS 625 - Big Data Computing/FinalProject/data/data_clean.rda")
+load("/home/shared/biostat625w2020/data_clean.rda")
 
 titles <- dat %>% 
     distinct(Title,.keep_all = T) %>% 
@@ -55,18 +55,23 @@ shinyServer(function(input, output) {
         #Create histogram
         ph <- ggplot(plot_data) + 
             geom_histogram(mapping = aes(x = IMDb), 
-                           bins = nbins, color = "white",
+                           bins = nbins, 
+                           color = "gray60",
                            fill = input$color) +
             labs(y = "Count", x = "") + 
             xlim(0,10) +
             theme_minimal()
         
+        #Create boxplot
         pb <- ggplot(plot_data) + 
-            geom_boxplot(mapping = aes(x = IMBb), color = "gray91",
-                         fill = input$color) +
-            labs(x = "IMDb Rating") +
-            xlim(0,10) +
-            theme_minimal()
+            geom_boxplot(mapping = aes(x = IMDb), 
+                         color = "gray60",
+                         fill = input$color,
+                         width = 0.6) +
+            labs(x = "IMDb Rating", y="") +
+            xlim(0,10) + 
+            theme_minimal() + 
+            theme(axis.text.y = element_text(color = "white"))
         
         ggarrange(ph,pb,ncol = 1, nrow = 2)
 
