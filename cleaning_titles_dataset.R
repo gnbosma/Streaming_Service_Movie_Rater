@@ -3,35 +3,67 @@ library (tidyr)
 
 load(file = here::here("data/data_all.rda"))
 
-#0: clean up titles dataset
-#remove adult films and keep distinct entries
-titles <- titles %>% filter (isAdult == F) %>% 
-  distinct(primaryTitle, .keep_all = T)
 
-#1: merge tvshows and movies from kaggle
-tvshows <- tvshows %>%
-  select (-1) %>% #remove column of row numbers
-  rename (Type = type,
-          RottenTomatoes = "Rotten Tomatoes",
-          PrimeVideo = "Prime Video")
 
+#1: clean up titles dataset
+#remove adult films and keep distinct entries (by title and year)
+titles <- titles %>% 
+  filter (isAdult == F) %>% 
+  select (tconst, titleType, primaryTitle, runtimeMinutes, genres, startYear) %>%
+  mutate (is_movie = ifelse (titleType %in% c("movie", "tvMovie"), 1, 0))
+
+#look at completeness of data from imdb
+colSums(!is.na (movies_clean))/ nrow(movies_clean)
+
+
+#2: merge movies from kaggle with imdb database
 movies <- movies %>%
   select (-1) %>% #remove column of row numbers 
   rename (RottenTomatoes = "Rotten Tomatoes",
-          PrimeVideo = "Prime Video") %>%
-  select (names(tvshows))
+          PrimeVideo = "Prime Video") 
 
-tvshows$Title <- as.character (tvshows$Title)
 movies$Title = as.character (movies$Title)
 
-dat <- as.data.frame(rbind (tvshows, movies))
+movies = left_join (movies, titles %>% filter (is_movie == 1), by = c("Title" = "primaryTitle"))
+
+movies_clean = movies %>%
+  filter (!is.na(tconst)) %>%
+  filter (Year == startYear) %>%
+  select (-ID, -titleType, -startYear, -is_movie, -Type) %>%
+  rename (imdb_genres = genres,
+          imdb_runtimeMinutes = runtimeMinutes,
+          kaggle_genres = Genres,
+          kaggle_runtimeMinutes = Runtime,
+          title = Title,
+          year = Year,
+          age_rating = Age,
+          imdb_score = IMDb,
+          rt_score = RottenTomatoes,
+          directors = Directors,
+          country = Country,
+          language = Language,
+          imdb_id = tconst,
+          netflix = Netflix,
+          hulu = Hulu,
+          amazonprime = PrimeVideo,
+          disneyplus = "Disney+"
+          )
+
+temp = left_join (movies_clean, metadata, by = c("tconst" = "titleId"))
+
+
+movies_check = movies %>%
+  filter (Year != startYear)
+
+
+
+
+
+
+
 
 #2: filter for titles only in the kaggle datasets and select the last season of a tvseries for the "year" (this is how the kaggle dataset decided on the rotten tomatoes score)
-titles <- titles %>%
-  filter (primaryTitle %in% dat$Title | originalTitle %in% dat$Title) %>%
-  arrange (primaryTitle, -startYear) %>%
-  distinct (primaryTitle, startYear, .keep_all = T) %>%
-  select (tconst, titleType, primaryTitle,  originalTitle, runtimeMinutes, genres, startYear) 
+
 
 #3: combine the primary and original titles into one column (primary title is the one used to publicize, original title is usually in the language in which the feature was released)
 titles = rbind (titles %>%
