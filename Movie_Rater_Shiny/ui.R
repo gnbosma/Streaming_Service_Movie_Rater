@@ -1,11 +1,3 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
 
 library(shiny)
 library(shinythemes)
@@ -14,7 +6,7 @@ shinyUI(fluidPage(
     theme = shinytheme("yeti"),
     
     tabsetPanel(
-        tabPanel("Movies & TV Shows",
+        tabPanel("Ratings Filter Tool",
                  
                  # Application title
                  titlePanel("Streaming Service Movie Rater"),
@@ -104,8 +96,22 @@ shinyUI(fluidPage(
             
         ),
         
-        tabPanel("Actors",
-            "Actors page in progress. Not sure what, if anything, we could have here about actors."
+        tabPanel("Ratings by Category",
+                fluidRow(
+                    tags$h3("Ratings by Streaming Service"),
+                    "Movie and TV show ratings for each streaming service. Note that, since some",
+                    "movies or shows might be available on more than one platform, these groupings",
+                    "are not mutually exclusive. Overall, differences in IMDb Ratings across streaming",
+                    "platforms appear to be small.",
+                    plotOutput("service_plot")
+                    
+                ),
+                fluidRow(
+                    tags$h3("Ratings by Target Age Group")
+                ),
+                fluidRow(
+                    tags$h3("Ratings by Average Tomatometer Score")
+                )
             ),
         
         tabPanel("Score Prediction"
@@ -114,19 +120,33 @@ shinyUI(fluidPage(
         
         tabPanel("About",
                  tags$p(
-                     tags$h2("Background"),
-                     "Why we chose this subject, why it's interesting, etc"
+                     tags$h3("Background"),
+                     "The purpose of this project was to both model and visualize the IMDb ",
+                     "ratings of movies and TV shows currently available for streaming on",
+                     "various online platforms. Based on ratings data from the International",
+                     "Movie Database (", tags$a("IMDb",href = "https://www.imdb.com/"),
+                     "), as well as streaming service data accessible for free on",
+                     tags$a("Kaggle",href = "https://www.kaggle.com/ruchi798/movies-on-netflix-prime-video-hulu-and-disney"),
+                     ", our team constructed a flexible model for predicting",
+                     "overall ratings on a scale of 0 to 5 stars. These predictions depended on",
+                     "a user-defined set of covariates, including such factors as a production's",
+                     "streaming service(s), target age group, release year, Rotten Tomato's ",
+                     tags$a("Average Tomatometer",href = "https://www.rottentomatoes.com/about#whatisthetomatometer"),
+                     "score, and others."
                  ),
                  tags$p(
-                     tags$h2("Streaming Service Movie Raters"),
+                     tags$h3("Streaming Service Movie Raters"),
                      "About the app, the model, etc"
                      
                  ),
                  tags$p(
-                     tags$h2("Contributors"),
+                     tags$h3("Contributors"),
                      "This software was developed by Grace Bosma, Dylan Clark-Boucher, and Chris",
                      "Shin, all current students in the University of Michigan Department of Biostatistics,",
-                     "as part of the course \"BIOSTAT 625: Big Data Computing.\""
+                     "as part of the course \"BIOSTAT 625: Big Data Computing.\" Additional information on",
+                     "our model, visualizations, and code can be found on our ",
+                     tags$a("GitHub repository",href ="https://github.com/gnbosma/Streaming_Service_Movie_Rater"),
+                     "."
                  )
             )
         )
