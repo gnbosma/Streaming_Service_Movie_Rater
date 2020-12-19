@@ -13,7 +13,7 @@ library(tidyverse)
 library(ggpubr)
 
 #Choose the location of data in your files. Too big to go on github
-load("/home/shared/biostat625w2020/data_clean.rda")
+#load("/home/shared/biostat625w2020/data_clean.rda")
 
 titles <- dat %>% 
     distinct(Title,.keep_all = T) %>% 
@@ -55,18 +55,21 @@ shinyServer(function(input, output) {
         }
         
         #Create figure
-        ggplot(plot_data,aes(x=IMDb)) + 
+        p1 <- ggplot(plot_data,aes(x=IMDb)) + 
             geom_histogram(bins = nbins, 
                            color = "gray60", 
-                           fill = input$color) + 
-            geom_boxplot(mapping=aes(y = -60), 
-                         width = 50,
-                         color = "gray60",
-                         fill = input$color) + 
+                           fill = input$color)
+        
+        height <- max(ggplot_build(p1)$data[[1]]$count)
+        
+        p1 + geom_boxplot(mapping=aes(y = -height/10), 
+                          width = height/10,
+                          color = "gray60",
+                          fill = input$color) + 
             labs(x = "IMDb Rating", y = "Frequency") +
-            theme_minimal() +
-            ylim(-100,1000) + 
-            xlim(0,10)
+            theme_minimal()
+        
+        
 
     })
 

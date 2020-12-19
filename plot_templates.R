@@ -6,7 +6,7 @@ library(tidyverse)
 library(ggpubr)
 
 #Choose the location of data in your files. Too big to go on github
-load("/home/shared/biostat625w2020/data_clean.rda")
+#load("/home/shared/biostat625w2020/data_clean.rda")
 
 titles <- dat %>% 
   distinct(Title,.keep_all = T) %>% 
@@ -54,9 +54,9 @@ ph <- ggplot(plot_data) +
                  bins = nbins, 
                  color = "gray60",
                  fill = input1$color) +
-  labs(y = "Count", x = "") + 
+  labs(y = "Frequency", x = "") + 
   xlim(0,10) + 
-  theme_minimal() + 
+  theme_minimal()
   theme(
     axis.text.x = element_blank(),
     panel.grid.minor = element_blank()
@@ -75,19 +75,22 @@ pb <- ggplot(plot_data) +
         axis.ticks.x = element_line(),
         axis.line.x.bottom = element_line(color = "gray27",
                                           size = .5))
+  
 
-ggarrange(ph,pb,ncol = 1, nrow = 2, heights = c(4,1))
+ggarrange(ph,pb,ncol = 1, nrow = 2, heights = c(3.5,1))
 
-ggplot(plot_data,aes(x=IMDb)) + 
+p1 <- ggplot(plot_data,aes(x=IMDb)) + 
   geom_histogram(bins = nbins, 
                  color = "gray60", 
-                 fill = input1$color) + 
-  geom_boxplot(mapping=aes(y = -60), 
-               width = 50,
+                 fill = input1$color)
+
+height <- max(ggplot_build(p1)$data[[1]]$count)
+
+p1 + geom_boxplot(mapping=aes(y = -height/10), 
+               width = height/10,
                color = "gray60",
                fill = input1$color) + 
   labs(x = "IMDb Rating", y = "Frequency") +
-  theme_minimal() +
-  ylim(-100,800)
+  theme_minimal()
 
 

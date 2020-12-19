@@ -108,6 +108,10 @@ shinyUI(fluidPage(
             "Actors page in progress. Not sure what, if anything, we could have here about actors."
             ),
         
+        tabPanel("Score Prediction"
+            
+            ),
+        
         tabPanel("About",
                  tags$p(
                      tags$h2("Background"),
