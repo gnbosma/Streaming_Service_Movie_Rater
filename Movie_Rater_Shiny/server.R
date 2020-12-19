@@ -20,6 +20,8 @@ titles <- dat %>%
     mutate(RottenTomatoes = RottenTomatoes * 100) %>% 
     filter(!is.na(IMDb),!is.na(RottenTomatoes))
 
+secondary_color = "gray60"
+
 #Function to check whether inputted x falls into given range
     #Input: vector x, length-2 vector of lower, upper limit
     #Output: logical vector same length as x
@@ -52,28 +54,19 @@ shinyServer(function(input, output) {
             nbins <- nrow(plot_data)
         }
         
-        #Create histogram
-        ph <- ggplot(plot_data) + 
-            geom_histogram(mapping = aes(x = IMDb), 
-                           bins = nbins, 
-                           color = "gray60",
-                           fill = input$color) +
-            labs(y = "Count", x = "") + 
-            xlim(0,10) +
-            theme_minimal()
-        
-        #Create boxplot
-        pb <- ggplot(plot_data) + 
-            geom_boxplot(mapping = aes(x = IMDb), 
+        #Create figure
+        ggplot(plot_data,aes(x=IMDb)) + 
+            geom_histogram(bins = nbins, 
+                           color = "gray60", 
+                           fill = input$color) + 
+            geom_boxplot(mapping=aes(y = -60), 
+                         width = 50,
                          color = "gray60",
-                         fill = input$color,
-                         width = 0.6) +
-            labs(x = "IMDb Rating", y="") +
-            xlim(0,10) + 
-            theme_minimal() + 
-            theme(axis.text.y = element_text(color = "white"))
-        
-        ggarrange(ph,pb,ncol = 1, nrow = 2)
+                         fill = input$color) + 
+            labs(x = "IMDb Rating", y = "Frequency") +
+            theme_minimal() +
+            ylim(-100,1000) + 
+            xlim(0,10)
 
     })
 

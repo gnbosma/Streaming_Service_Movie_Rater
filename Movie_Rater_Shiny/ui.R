@@ -10,7 +10,9 @@
 library(shiny)
 library(shinythemes)
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(theme = shinytheme("slate"),
+shinyUI(fluidPage(
+    theme = shinytheme("yeti"),
+    
     tabsetPanel(
         tabPanel("Movies & TV Shows",
                  
@@ -21,25 +23,36 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
                  sidebarLayout(
                      
                      sidebarPanel(
-                         fluidRow(
-                             tags$h2("Include"),
+                         
+                         #Side Panel Row One
+                         fluidRow( 
+                             tags$h2("Filter"),
                              
-                             checkboxGroupInput("service", label = "Streaming service", 
-                                                choices = list("Disney+" = "Disney+", 
-                                                               "Hulu" = "Hulu", 
-                                                               "Netflix" = "Netflix",
-                                                               "PrimeVideo" = "PrimeVideo"),
-                                                selected = c("Disney+","Hulu","Netflix",
-                                                             "PrimeVideo")
-                                                ),
-                             
-                             checkboxGroupInput("ages", label = "Age Group", 
-                                                choices = list("All" = "all", "7+" = "7+", 
+                             column(6,
+                                 checkboxGroupInput("service", 
+                                                    label = "Service", 
+                                                    choices = list("Disney+" = "Disney+", 
+                                                                   "Hulu" = "Hulu", 
+                                                                   "Netflix" = "Netflix",
+                                                                   "PrimeVideo" = "PrimeVideo"),
+                                                    selected = c("Disney+","Hulu","Netflix",
+                                                                 "PrimeVideo")
+                                                    )                                    
+                                    
+                            ),
+                            
+                            column(6,
+                                 checkboxGroupInput("ages", 
+                                                    label = "Age Group",
+                                                    choices = list("All ages" = "all", "7+" = "7+", 
                                                                "13+" = "13+", "16+" = "16+",
-                                                               "18+" = "18+"), 
-                                                selected = c("all","7+","13+","16+","18+")
-                                                ), 
-                             
+                                                               "18+" = "18+"),
+                                                    selected = c("all","7+","13+","16+","18+")
+                                                )                            
+                            )),
+                         
+                         #Side Panel Row 2
+                         fluidRow(
                              sliderInput("tscore", label = "Tomato Score", min = 0, 
                                          max = 100, value = c(0,100)
                                          ),
@@ -50,17 +63,19 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
                                          min = 1901,
                                          max = 2020,
                                          value = c(1901,2020),
-                                         sep = "")
-                             ),
+                                         sep = "")                             
+                             
+                         ),
                          
                          tags$hr(),
                          
+                         #Side Panel Row 3
                          fluidRow(
                              tags$h2("Visualization Features"),
                              sliderInput("bins",
                                          label = "Number of bins",
-                                         min = 5,
-                                         max = 40,
+                                         min = 10,
+                                         max = 30,
                                          value = 20),
                              
                              selectInput("color", label = "Color choice", 
@@ -71,8 +86,9 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
                                                         "Purple" = "orchid4"), 
                                          selected = "orchid4")
                              
-                         )
-                     ),
+                         ),
+                    
+                         width = 3),
                      
                      # Show a plot of the generated distribution
                      mainPanel(
@@ -89,11 +105,25 @@ shinyUI(fluidPage(theme = shinytheme("slate"),
         ),
         
         tabPanel("Actors",
-            "Actors page in progress"
+            "Actors page in progress. Not sure what, if anything, we could have here about actors."
             ),
         
-        tabPanel("Acknowledgements",
-                 "Basic info about project, where data came from, etc."
+        tabPanel("About",
+                 tags$p(
+                     tags$h2("Background"),
+                     "Why we chose this subject, why it's interesting, etc"
+                 ),
+                 tags$p(
+                     tags$h2("Streaming Service Movie Raters"),
+                     "About the app, the model, etc"
+                     
+                 ),
+                 tags$p(
+                     tags$h2("Contributors"),
+                     "This software was developed by Grace Bosma, Dylan Clark-Boucher, and Chris",
+                     "Shin, all current students in the University of Michigan Department of Biostatistics,",
+                     "as part of the course \"BIOSTAT 625: Big Data Computing.\""
                  )
+            )
         )
 ))
