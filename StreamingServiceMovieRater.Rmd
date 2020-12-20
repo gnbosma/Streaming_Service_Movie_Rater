@@ -1,12 +1,39 @@
 ---
 title: "Streaming Service Movie Rater"
 author: "Chris Shin, Dylan Clark-Boucher, Grace Bosma"
-date: "11/21/2020"
+date: "Due: 12/20/2020"
 output: pdf_document
 ---
 
 ```{r, include= FALSE}
 library(pacman)
-pacman::p_load(tidyr, dplyr)
+pacman::p_load(tidyr, dplyr, ggplot2)
 ```
+
+# Objective 
+The objective of this project will be to predict the popular rating of a movie using streaming service, director, actors, and rotten tomatoes rating
+
+# Introduction 
+Pulled from proposal: 
+This may be interesting to look into as many people have purchased an additional streaming service or increased time spent streaming as a result of the COVID-19 pandemic. 
+
+# Methods 
+The data for this analysis was obtained from a combination of Kaggle and IMBd websites. Information regarding streaming service was pulled from kaggle and contained information on 16,631 movie titles through 16744 observations and 17 variables. To supplement information on ratings and actors involved, two datasets from IMBd were merged. The first, titles, contained 
+
+
+- data Sources 
+- data cleaning and merging process
+
+# Prediction
+- lm??
+
+# Discussion
+- 
+
+# Vizualization
+- 
+
+# RShiny Application
+- mention things that you can adjust / filter by 
+- include an example ? 
 

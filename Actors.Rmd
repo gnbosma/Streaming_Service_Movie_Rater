@@ -13,7 +13,7 @@ library(reshape)
 # Getting Started 
 ```{r}
 # read in dataset 
-download.file ("https://datasets.imdbws.com/name.basics.tsv.gz",here::here("data-raw/actors.tsv.gz"))
+# download.file("https://datasets.imdbws.com/name.basics.tsv.gz",here::here("data-raw/actors.tsv.gz"))
 
 # Save locally and only include complete cases
 data_orig <- readr::read_tsv(here::here("data-raw/actors.tsv.gz"), )
@@ -42,40 +42,61 @@ actors$dir <- ifelse(actors$P1 == 'director' & !is.na(actors$P1)  | actors$P2 ==
 # additional role variable (sum of director, writer, producer indicator variables)
 actors$add_role <- actors$prod + actors$writer + actors$dir
 
-# melt and aggrate number of actors assocaiated with movie title
+# melt and aggregate number of actors associated with movie titles
 title_actors <- actors %>% select(nconst, primaryName, T1, T2, T3, T4) 
 title_actors <- as.data.frame(title_actors) %>% melt(id = c("nconst", "primaryName")) %>% group_by(value) %>% summarise(num_actors = n())
 title_actors <- title_actors[-c(1,2,896958), ]
 
-# add to actors dataset
-colnames(title_actors) <- c("T1", "num_actors1")
-actors2 <- left_join(x = actors, y = title_actors, by = "T1")
-colnames(title_actors) <- c("T2", "num_actors2")
-actors2 <- left_join(x = actors2, y = title_actors, by = "T2")
+# add to actors dataset. For each "knownfor" title, there will be an associated "num_actor"
+# variable that is the number of actors listed in the same data set associated with the same title
+colnames(title_actors) <- c("T1", "num_actors1") 
+actors <- left_join(x = actors, y = title_actors, by = "T1")
+colnames(title_actors) <- c("T2", "num_actors_2")
+actors <- left_join(x = actors, y = title_actors, by = "T2")
 colnames(title_actors) <- c("T3", "num_actors3")
-actors2 <- left_join(x = actors2, y = title_actors, by = "T3")
+actors <- left_join(x = actors, y = title_actors, by = "T3")
 colnames(title_actors) <- c("T4", "num_actors4")
-actors2 <- left_join(x = actors2, y = title_actors, by = "T4")
+actors <- left_join(x = actors, y = title_actors, by = "T4")
+
+actors$mean_num_actors <- rowMeans(actors[,17:20], na.rm = TRUE)
+
+# there is 20,000 cases where the only title listed is "N".... remove these cases as 
+# they produce NaN and are not meaningful
+actors <- actors[complete.cases(actors$mean_num_actors),]
+```
+
+# Potential Scores 
+```{r}
+# includes number of additional roles an actor/actress took on and mean number of actors involved
+# in movies actors "KnownFor" titles. ie increase in score if affiliated with movies with more
+# actors/actresses
+actors$score1 <- actors$add_role*10 + actors$mean_num_actors 
+
+# considers number of titles and additional roles an actor/actress took on
+actors$score2 <- actors$num_titles*10 + actors$add_role *10
+
+# prioritizes producers, directors, writers respectively
+actors$score3 <- actors$prod *30 +  actors$dir *20 + actors$writer*10
 ```
 
 # Directors 
+In case we decide to look at directors: 
 ```{R}
 directors <- data %>% filter(P1 == 'director' | P2 == 'director' | P3 == 'director')
 ```
 
 # By Title 
+Original dataset 
 ```{r}
 title <- data %>% select(nconst, primaryName, T1, T2, T3, T4)
 title <- as.data.frame(title)
 title <- melt(title, id = c("nconst", "primaryName"))
-#title <- title[order(title$value),] 
 title <- title %>% group_by(value) %>% summarise(num_actors = n())
 title <- title[-c(1,2,1290370), ]
 ```
 
-# Scores 
+# Save 
 ```{r}
-
-
+# actors
+#save(actors, actors, file = here::here("actors.rda")) 
 ```
-
