@@ -9,7 +9,7 @@ shinyUI(fluidPage(
         tabPanel("Ratings Filter Tool",
                  
                  # Application title
-                 titlePanel("Streaming Service Movie Rater"),
+                 titlePanel("Distribution of Movie Ratings"),
                  
                  # Sidebar with user input
                  sidebarLayout(
@@ -17,35 +17,35 @@ shinyUI(fluidPage(
                      sidebarPanel(
                          
                          #Side Panel Row One
-                         fluidRow( 
-                             tags$h2("Filter"),
+                        fluidRow(
+                             tags$h3("Filter"),
                              
-                             column(6,
+                             column(4,
+                                    checkboxGroupInput("ages", 
+                                                       label = "Age",
+                                                       choices = list("All" = "All Ages", "7+" = "7+", 
+                                                                      "13+" = "13+", "16+" = "16+",
+                                                                      "18+" = "18+"),
+                                                       selected = c("All Ages","7+","13+","16+","18+"))                            
+                             ),
+                             
+                             column(4, offset = 1,
                                  checkboxGroupInput("service", 
                                                     label = "Service", 
-                                                    choices = list("Disney+" = "Disney+", 
-                                                                   "Hulu" = "Hulu", 
-                                                                   "Netflix" = "Netflix",
-                                                                   "PrimeVideo" = "PrimeVideo"),
-                                                    selected = c("Disney+","Hulu","Netflix",
-                                                                 "PrimeVideo")
+                                                    choices = list("Disney+" = "disneyplus", 
+                                                                   "Hulu" = "hulu", 
+                                                                   "Netflix" = "netflix",
+                                                                   "Prime Video" = "amazonprime"),
+                                                    selected = c("disneyplus","hulu","netflix",
+                                                                 "amazonprime")
                                                     )                                    
                                     
-                            ),
-                            
-                            column(6,
-                                 checkboxGroupInput("ages", 
-                                                    label = "Age Group",
-                                                    choices = list("All ages" = "all", "7+" = "7+", 
-                                                               "13+" = "13+", "16+" = "16+",
-                                                               "18+" = "18+"),
-                                                    selected = c("all","7+","13+","16+","18+")
-                                                )                            
                             )),
+                        
                          
-                         #Side Panel Row 2
-                         fluidRow(
-                             sliderInput("tscore", label = "Tomato Score", min = 0, 
+                         fluidRow(#Side Panel Row 2
+
+                        sliderInput("tscore", label = "Tomatometer Score", min = 0, 
                                          max = 100, value = c(0,100)
                                          ),
                              
@@ -55,65 +55,112 @@ shinyUI(fluidPage(
                                          min = 1901,
                                          max = 2020,
                                          value = c(1901,2020),
-                                         sep = "")                             
-                             
-                         ),
-                         
-                         tags$hr(),
-                         
-                         #Side Panel Row 3
-                         fluidRow(
-                             tags$h2("Visualization Features"),
-                             sliderInput("bins",
-                                         label = "Number of bins",
-                                         min = 10,
-                                         max = 30,
-                                         value = 20),
-                             
-                             selectInput("color", label = "Color choice", 
-                                         choices = list("Blue" = "slateblue2", 
-                                                        "Red" = "firebrick3", 
-                                                        "Green" = "seagreen4",
-                                                        "Orange" = "sienna2",
-                                                        "Purple" = "orchid4"), 
-                                         selected = "orchid4")
-                             
-                         ),
+                                         sep = ""),
                     
-                         width = 3),
+                         width = 2.5)),
                      
                      # Show a plot of the generated distribution
                      mainPanel(
                          fluidRow(
-                             plotOutput("histplot"),
-                             tags$p("Histogram of IMDb Ratings among selected movies and TV shows.")
+                             column(8,
+                                    sliderInput("bins",
+                                                label = "Number of bins",
+                                                min = 10,
+                                                max = 30,
+                                                value = 20)
+                             ),
+                             column(4,
+                                    selectInput("color", label = "Color choice", 
+                                                choices = list("Blue" = "slateblue2", 
+                                                               "Red" = "firebrick3", 
+                                                               "Green" = "seagreen4",
+                                                               "Orange" = "sienna2",
+                                                               "Purple" = "orchid4"), 
+                                                selected = "orchid4")
+                             )
                          ),
+                         
                          fluidRow(
-                             "Text in lower row"
-                         )
+                             plotOutput("histplot",height = "320px")
+                             )
+
                      )
                  )
             
         ),
         
+        #Ratings by category panel
         tabPanel("Ratings by Category",
-                fluidRow(
-                    tags$h3("Ratings by Streaming Service"),
-                    "Movie and TV show ratings for each streaming service. Note that, since some",
-                    "movies or shows might be available on more than one platform, these groupings",
-                    "are not mutually exclusive. Overall, differences in IMDb Ratings across streaming",
-                    "platforms appear to be small.",
-                    plotOutput("service_plot")
+                navlistPanel(
+                    tabPanel("Streaming Service",
+                             titlePanel("Ratings by Streaming Service"),
+                             fluidRow(column(10, offset = 1, 
+                                      "Below are the distributions of movie ratings for each streaming service.", 
+                                      "Our dataset contained 299 movies from Disney+, 538 from Hulu, 1,862 from Netflix,", 
+                                      "and 6,700 from Amazon Prime Video, for a total of 8,970 unique films. Note that, since some",
+                                      "movies might be available on more than one platform, these groupings",
+                                      "are not mutually exclusive. Overall, differences in IMDb Ratings across streaming",
+                                      "platforms appear to be small.")),
+                            tags$hr(),
+                            fluidRow(column(10, offset = 1, plotOutput("service_plot")))
+                            ),
                     
-                ),
-                fluidRow(
-                    tags$h3("Ratings by Target Age Group")
-                ),
-                fluidRow(
-                    tags$h3("Ratings by Average Tomatometer Score")
+                    tabPanel("Age Rating",
+                             titlePanel("Ratings by Age Groups"),
+                             fluidRow(column(10, offset = 1,
+                                      "The movies we looked at spanned all genres and all age groups.",
+                                      "There were 379 designated for all ages, 881 for ages 7+,",
+                                      "819 for ages 13+, 189 for ages 16+, and a massive 2,188 for ages 18+.",
+                                      "The ratings distributions across these groups once again appear to be",
+                                      "quite similar, though the 16+ group had the highest median score.")),
+                             tags$hr(),
+                             fluidRow(column(10, offset = 1, plotOutput("age_plot")))
+                        
+                    ),
+                    tabPanel("Tomatometer Score",
+                             titlePanel("Ratings by Tomatometer Score"),
+                             fluidRow(column(10, offset = 1,
+                                             "The figure below shows the assocation between Tomatometer score",
+                                             "and IMDb rating for movies on all of our streaming platforms.",
+                                             "While IMDb rating, our outcome of interest, gives a glimpse",
+                                             "at a movie's overall audience reception, the tomatometer score,",
+                                             "on the x-axis, tells us what professional critics thought of the film.",
+                                             "Unsurprisingly, we can spot a relatively strong positive correlation:",
+                                             " movies with a high Tomatometer scores tend to have higher IMDb ratings.",
+                                             "To see if that holds up for particular age groups or streaming platforms,",
+                                             "make sure to check out the options included below the graph.")),
+                             tags$hr(),
+                             fluidRow(column(10, offset = 1, plotOutput("ts_plot"))),
+                             tags$hr(),
+                             fluidRow(
+                                 column(3, offset = 1,
+                                        checkboxGroupInput("ts_ages", 
+                                                           label = "Age",
+                                                           choices = list("All" = "All Ages", "7+" = "7+", 
+                                                                          "13+" = "13+", "16+" = "16+",
+                                                                          "18+" = "18+"),
+                                                           selected = c("All Ages","7+","13+","16+","18+"))
+                                 ),
+                                 
+                                 column(3,offset = 0,
+                                        checkboxGroupInput("ts_service", 
+                                                           label = "Service", 
+                                                           choices = list("Disney+" = "disneyplus", 
+                                                                          "Hulu" = "hulu", 
+                                                                          "Netflix" = "netflix",
+                                                                          "Prime Video" = "amazonprime"),
+                                                           selected = c("disneyplus","hulu","netflix",
+                                                                        "amazonprime"))                 
+                                ))
+                    
+                    ),
+                    
+                    widths = c(2,10)
                 )
+                
             ),
         
+        #Score Prediction Panel
         tabPanel("Score Prediction"
             
             ),
@@ -122,7 +169,7 @@ shinyUI(fluidPage(
                  tags$p(
                      tags$h3("Background"),
                      "The purpose of this project was to both model and visualize the IMDb ",
-                     "ratings of movies and TV shows currently available for streaming on",
+                     "ratings of movies and films currently available for streaming on",
                      "various online platforms. Based on ratings data from the International",
                      "Movie Database (", tags$a("IMDb",href = "https://www.imdb.com/"),
                      "), as well as streaming service data accessible for free on",

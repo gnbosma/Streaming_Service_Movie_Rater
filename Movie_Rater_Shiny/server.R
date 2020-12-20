@@ -3,26 +3,36 @@ library(shinythemes)
 library(tidyverse)
 library(ggpubr)
 
-#Choose the location of data in your files. Too big to go on github
-#load("/home/shared/biostat625w2020/data_clean.rda")
+#Load and clean movies data
+load("../movies.rda")
 
-titles <- dat %>% 
-    distinct(Title,.keep_all = T) %>% 
-    mutate(RottenTomatoes = RottenTomatoes * 100) %>% 
-    filter(!is.na(IMDb),!is.na(RottenTomatoes))
+titles <- movies_clean %>% 
+    mutate(rt_score = as.numeric(str_remove(rt_score,"%")),
+           age_rating = ifelse(age_rating=="all","All Ages",age_rating)
+           ) %>% 
+    filter(!is.na(imdb_score),!is.na(rt_score))
 
+#Create list documenting service names, labels, and colors
+service_list <- c()
+service_list$disneyplus <- c("Disney+","dodgerblue3")
+service_list$hulu <- c("Hulu","seagreen2")
+service_list$netflix <- c("Netflix","red2")
+service_list$amazonprime <- c("Prime Video","deepskyblue1")
+for(name in names(service_list)){
+    names(service_list[[name]]) <- c("label","color")
+}
+
+#Set secondary color for plots
 secondary_color = "gray60"
 
 #Function to check whether inputted x falls into given range
-    #Input: vector x, length-2 vector of lower, upper limit
-    #Output: logical vector same length as x
 inRange <- function(x,range){
     x <- as.numeric(x)
     range <- as.numeric(range)
     return(x >= range[1] & x <= range[2])
 }
 
-
+#The server
 shinyServer(function(input, output) {
     
     output$histplot <- renderPlot({
@@ -34,9 +44,9 @@ shinyServer(function(input, output) {
             
          plot_data <- titles %>% 
              filter(right_service,
-                    inRange(RottenTomatoes, input$tscore),
-                    inRange(Year,input$yr),
-                    Age %in% input$ages
+                    inRange(rt_score, input$tscore),
+                    inRange(year,input$yr),
+                    age_rating %in% input$ages
                     )
         
         #Make sure bin count is fine
@@ -46,7 +56,7 @@ shinyServer(function(input, output) {
         }
         
         #Create figure
-        p1 <- ggplot(plot_data,aes(x=IMDb)) + 
+        p1 <- ggplot(plot_data,aes(x=imdb_score)) + 
             geom_histogram(bins = nbins, 
                            color = secondary_color, 
                            fill = input$color)
@@ -57,8 +67,15 @@ shinyServer(function(input, output) {
                           width = height/10,
                           color = secondary_color,
                           fill = input$color) + 
-            labs(x = "IMDb Rating", y = "Frequency") +
-            theme_minimal()
+            labs(x = "Rating out of 10", 
+                 y = "Frequency", 
+                 title = "IMDb Movie Ratings: Histogram & Boxplot") +
+            xlim(0,10) +
+            theme_minimal() +
+            theme(
+                plot.title = element_text(size = 16, hjust = 0.5),
+                axis.line.x = element_line(color = "darkgrey",size = 1)
+            )
         
         
 
@@ -66,17 +83,15 @@ shinyServer(function(input, output) {
     
     output$service_plot <- renderPlot({
         sp <-c()
-        services <- c("Disney+","Hulu","Netflix","PrimeVideo")
-        service_colors <- c("dodgerblue3","seagreen2","red2","deepskyblue1")
-        names(service_colors) <- services
         
-        for(service in services){
+        for(service in names(service_list)){
             right_service <- titles[[service]]==1
+            
             p <- titles %>% 
                 filter(right_service) %>% 
-                ggplot(mapping = aes(y=IMDb)) +
+                ggplot(mapping = aes(y=imdb_score)) +
                 geom_boxplot(width = 1,
-                             fill = service_colors[service],
+                             fill = service_list[[service]]["color"],
                              color = secondary_color) +
                 theme_minimal() +
                 ylim(0,10) +
@@ -85,15 +100,18 @@ shinyServer(function(input, output) {
                     panel.grid = element_blank(),
                     plot.title = element_text(hjust = 0.5)
                 )
-            if(service!="Disney+"){
+            if(service!="disneyplus"){
                 p <- p + theme(axis.text.y = element_blank()) + 
-                    labs(y = "", title = service)
+                    labs(y = "", 
+                         title = service_list[[service]]["label"])
             
             }else{
                 p <- p + theme(axis.line.y = element_line(color = secondary_color,
                                                           size = 1),) +
-                    labs(y = "IMDb Rating",title = service)
+                    labs(y = "IMDb Rating",
+                         title = service_list[[service]]["label"])
             }
+            
             sp[[service]] <- p
         }
 
@@ -104,28 +122,31 @@ shinyServer(function(input, output) {
     
     output$age_plot <- renderPlot({
         ap <- c()
-        age_groups <- c("all","7+","13+","16+","18+")
-        age_colors <- c("seagreen4","slateblue2","orchid4","firebrick3","sienna2")
+        age_groups <- c("All Ages","7+","13+","16+","18+")
+        age_colors <- c("seagreen4","slateblue2","orchid4",
+                        "firebrick3","sienna2")
         names(age_colors) <- age_groups
         
         for(age in age_groups){
             p <- titles %>% 
-                filter(Age == age) %>% 
-                ggplot(aes(y = IMDb)) +
+                filter(age_rating == age) %>% 
+                ggplot(aes(y = imdb_score)) +
                 geom_boxplot(width = 1,
                              fill = age_colors[age],
                              color = secondary_color) + 
+                ylim(0,10) +
                 theme_minimal() +
                 theme(axis.text.x = element_blank(),
                       panel.grid = element_blank(),
                       plot.title = element_text(hjust = .5))
             
-            if(age == "all"){
+            if(age == "All Ages"){
                 p <- p + theme(axis.line.y = element_line(color = secondary_color,
                                                           size = 1),) +
                     labs(y = "IMDb Rating",title = "All Ages")
             }else{
-                p <- p + labs(title = age, axis.text.y = element_blank())
+                p <- p + labs(title = age, y = "") +
+                    theme(axis.text.y = element_blank())
             }
             ap[[age]] <- p
         }
@@ -134,5 +155,29 @@ shinyServer(function(input, output) {
         
         
     })
+    
+    output$ts_plot <- renderPlot({
+        right_service <- titles %>% 
+            select(all_of(input$ts_service)) %>% 
+            rowSums() %>% as.logical()
+        
+        titles %>% 
+            filter(right_service,
+                   age_rating %in% input$ts_ages) %>% 
+            ggplot(aes(x = rt_score, y = imdb_score)) +
+            geom_point(color = "orchid4",
+                       alpha = 0.4) +
+            xlim(0,100) + 
+            ylim(0,10) +
+            theme_bw() +
+            labs(x = "Tomatometer Score", y ="IMDb Ratings",
+                 title = "IMDb Movie Ratings by Tomatometer Score")+
+            theme(plot.title = element_text(size = 14))
+        
+        
+    })
 
+    
+    
+    
 })
