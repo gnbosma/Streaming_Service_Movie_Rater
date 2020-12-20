@@ -1,0 +1,10 @@
+name: movie_rater_shiny
+title:
+username:
+account: dylanclark-boucher
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3420838
+bundleId: 4012924
+url: https://dylanclark-boucher.shinyapps.io/movie_rater_shiny/
+when: 1608503795.11283
