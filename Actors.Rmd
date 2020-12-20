@@ -65,6 +65,20 @@ actors$mean_num_actors <- rowMeans(actors[,17:20], na.rm = TRUE)
 actors <- actors[complete.cases(actors$mean_num_actors),]
 ```
 
+# Potential Scores 
+```{r}
+# includes number of additional roles an actor/actress took on and mean number of actors involved
+# in movies actors "KnownFor" titles. ie increase in score if affiliated with movies with more
+# actors/actresses
+actors$score1 <- actors$add_role*10 + actors$mean_num_actors 
+
+# considers number of titles and additional roles an actor/actress took on
+actors$score2 <- actors$num_titles*10 + actors$add_role *10
+
+# prioritizes producers, directors, writers respectively
+actors$score3 <- actors$prod *30 +  actors$dir *20 + actors$writer*10
+```
+
 # Directors 
 In case we decide to look at directors: 
 ```{R}
@@ -81,17 +95,8 @@ title <- title %>% group_by(value) %>% summarise(num_actors = n())
 title <- title[-c(1,2,1290370), ]
 ```
 
-# Potential Scores 
+# Save 
 ```{r}
-# includes number of additional roles an actor/actress took on and mean number of actors involved
-# in movies actors "KnownFor" titles. ie increase in score if affiliated with movies with more
-# actors/actresses
-actors$score1 <- actors$add_role*10 + actors$mean_num_actors 
-
-# considers number of titles and additional roles an actor/actress took on
-actors$score2 <- actors$num_titles*10 + actors$add_role *10
-
-# prioritizes producers, directors, writers respectively
-actors$score3 <- actors$prod *30 +  actors$dir *20 + actors$writer*10
+# actors
+#save(actors, actors, file = here::here("actors.rda")) 
 ```
-
