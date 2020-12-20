@@ -47,8 +47,8 @@ movies1 = rbind (  movies1 %>%
                      ungroup() %>%
                      filter (n == 1) %>%
                      mutate (diff_from_Year = abs (Year - startYear)) %>%
-                   filter (diff_from_Year < 5) %>%
-                   select (-n, -diff_from_Year),
+                     filter (diff_from_Year < 5) %>%
+                     select (-n, -diff_from_Year),
                    movies1 %>%
                      filter (!is.na(tconst)) %>%
                      group_by (Title) %>%
@@ -113,6 +113,8 @@ for (i in 1:10) {
 sum(!is.na(movies2$tconst))
 nrow(movies2) - length (unique (movies2$Title)) #number of multiple matches to imdb_id
 
+movies2 = movies2 %>%
+  select (-title)
 movies2 = rbind (  movies2 %>%
                      filter (!is.na(tconst)) %>%
                      group_by (Title) %>%
@@ -151,7 +153,9 @@ movies2 = rbind (  movies2 %>%
           amazonprime = PrimeVideo,
           disneyplus = "Disney+"
   ) %>%
-  distinct (title, imdb_id, .keep_all = T)
+  distinct (title, imdb_id, .keep_all = T) %>%
+  select (-bin, -distance)
 
 
-View(movies2)
+movies_clean = rbind (movies1, movies2)
+save (movies_clean, "movies.rda")
