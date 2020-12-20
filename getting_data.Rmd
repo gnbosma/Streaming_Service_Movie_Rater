@@ -28,7 +28,7 @@ dir.create(here::here("data-raw"))
 install.packages ("googlesheets4")
 install.packages ("googledrive")
 
-#2. uncomment the following line, replace the email in the second line with your own email, run the three lines following the prompts through the browser, and recomment the following line 
+#2. uncomment the following line, replace the email in the second line with your own email, run the three lines following the prompts through the browser, and re-comment the following line 
 # options(gargle_oauth_cache = ".secrets")
 googledrive::drive_auth(cache = ".secrets", email = "shincd@umich.edu")
 googlesheets4::gs4_auth(token = drive_token())
@@ -36,17 +36,16 @@ googlesheets4::gs4_auth(token = drive_token())
 #3. read in the movie dataset
 movies <- googlesheets4::read_sheet ("https://docs.google.com/spreadsheets/d/15A3ofKS3vitNCqUmfGYG7cnya6mjiCOaHfl6yXzq9y8/edit?urlBuilderDomain=umich.edu#gid=0")
 
-#4. read in the tv show dataset
+#4. read in the tv show dataset-- note we didn't end up using this dataset
 tvshows <- googlesheets4::read_sheet ("https://docs.google.com/spreadsheets/d/1FJEMSsNcsDpAs4itkThBsDHZjKx1qTNV3GyG9p26qSk/edit?urlBuilderDomain=umich.edu#gid=0")
 
 ```
 
 ``` {r downloading imdb datasets, eval = F}
-
 # from https://datasets.imdbws.com/, "title.basics.tsv.gz"
 # need this dataset to match movie titles to actors
 download.file ("https://datasets.imdbws.com/title.basics.tsv.gz", here::here("data-raw/titles.tsv.gz"))
-titles <- readr::read_tsv (here::here("titles.tsv.gz"))
+titles <- readr::read_tsv (here::here("data-raw/titles.tsv.gz"))
 
 # from https://datasets.imdbws.com/, "name.basics.tsv.gz"
 download.file ("https://datasets.imdbws.com/name.basics.tsv.gz", here::here("data-raw/actors.tsv.gz"))
@@ -61,71 +60,7 @@ metadata <- readr::read_tsv (here::here("data-raw/metadata.tsv.gz") )
 
 
 ```{r save raw data files, eval = F}
-save(tvshows, movies, titles, actors, metadata, file = here::here("data/data_all.rda")) 
+save(tvshows, movies, titles, actors, metadata, file = "data-raw/data_all.rda") 
 
 ```
 
-
-``` {r merging and saving only necessary entries from imdb datasets, eval = F}
-load(file = here::here("data/data_all.rda"))
-
-#1: add tv shows and movies to one joint dataset dat
-tvshows <- tvshows %>%
-  select (-1) %>% #remove column of row numbers
-  rename (Type = type,
-          RottenTomatoes = "Rotten Tomatoes",
-          PrimeVideo = "Prime Video")
-
-movies <- movies %>%
-  select (-1) %>% #remove column of row numbers 
-  rename (RottenTomatoes = "Rotten Tomatoes",
-          PrimeVideo = "Prime Video") %>%
-  select (names(tvshows))
-
-dat <- rbind (tvshows, movies)
-
-#2: filter for titles and metadata in dat and join with dat
-titles1 <- titles %>%
-  filter (primaryTitle %in% dat$Title | originalTitle %in% dat$Title) %>%
-  select (tconst, titleType, primaryTitle,  runtimeMinutes, genres) %>%
-  left_join (metadata, by = c("primaryTitle" = "title")) %>%
-  filter (tconst == titleId) %>%
-  mutate_if(is.character, list(~na_if(., "\\N")))
-
-
-
-
-merged_regions = aggregate(titles1$region, list(titles1$primaryTitle), paste, collapse=",")
-merged_languages = aggregate(titles1$language, list(titles1$primaryTitle), paste, collapse=",")
-tomerge = inner_join (merged_regions, merged_languages, by = "Group.1")
-titles1 = left_join (titles1, tomerge, by = c("primaryTitle" = "Group.1")) %>%
-  select (-c(region, language)) %>%
-  rename (region = x.x,
-          language = x.y)
-
-dat <- left_join (dat, titles1, by = c("Title" = "primaryTitle")) #need to check that this is accurate
-
-#3: pivot_wider on actors to separate arrays in "knownForTitles" column
-actors = actors %>%
-  tidyr::separate(knownForTitles, into = c("1", "2", "3", "4", "5", "6"))
-
-
-actors = tidyr::pivot_longer(actors, 
-                             cols = c("1", "2", "3", "4", "5", "6"),
-                             names_to = "NA",
-                             values_to = "title") %>%
-  rename (tconst = title) %>%
-  select (primaryName,
-          birthYear,
-          deathYear,
-          primaryProfession,
-          tconst) %>%
-  filter (tconst %in% dat$tconst)
-
-save(dat, actors, file = here::here("data/data_clean.rda")) 
-```
-
-``` {r to load clean dataset}
-load (file = here::here("data/data_clean.rda"))
-
-```
