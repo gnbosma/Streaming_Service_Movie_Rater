@@ -1,7 +1,10 @@
 library (dplyr)
 library (tidyr)
+library (fuzzyjoin)
 
-load(file = here::here("data/data_all.rda"))
+# load(file = here::here("data/data_all.rda"))
+# save (movies, titles, file = "data/movies_titles.rda")
+load (file = "data/movies_titles.rda")
 
 
 
@@ -9,14 +12,21 @@ load(file = here::here("data/data_all.rda"))
 #remove adult films and keep distinct entries (by title and year)
 titles <- titles %>% 
   filter (isAdult == F) %>% 
-  select (tconst, titleType, primaryTitle, runtimeMinutes, genres, startYear) %>%
-  mutate (is_movie = ifelse (titleType %in% c("movie", "tvMovie"), 1, 0))
-
-#look at completeness of data from imdb
-colSums(!is.na (movies_clean))/ nrow(movies_clean)
+  select (tconst, titleType, primaryTitle, originalTitle, runtimeMinutes, genres, startYear) %>%
+  filter (titleType %in% c("movie", "tvMovie"))
 
 
-#2: merge movies from kaggle with imdb database
+titles = rbind (titles %>% 
+                  distinct (primaryTitle, tconst, .keep_all = T) %>%
+                  select (-originalTitle) %>%
+                  rename (title = primaryTitle),
+                titles %>%
+                  distinct (originalTitle, tconst, .keep_all = T) %>%
+                  select (-primaryTitle) %>%
+                  rename (title = originalTitle))
+
+
+#2: merge movies from kaggle with imdb database using primaryTitle
 movies <- movies %>%
   select (-1) %>% #remove column of row numbers 
   rename (RottenTomatoes = "Rotten Tomatoes",
@@ -24,12 +34,32 @@ movies <- movies %>%
 
 movies$Title = as.character (movies$Title)
 
-movies = left_join (movies, titles %>% filter (is_movie == 1), by = c("Title" = "primaryTitle"))
+#first iteration-- direct match
+movies1 = left_join (movies, titles, by = c("Title" = "title")) %>%
+  distinct (Title, tconst, .keep_all = T)
 
-movies_clean = movies %>%
-  filter (!is.na(tconst)) %>%
-  filter (Year == startYear) %>%
-  select (-ID, -titleType, -startYear, -is_movie, -Type) %>%
+nrow(movies1) - length (unique (movies1$Title)) #number of multiple matches to imdb_id
+
+movies1 = rbind (  movies1 %>%
+                     filter (!is.na(tconst)) %>%
+                     group_by (Title) %>%
+                     add_count() %>%
+                     ungroup() %>%
+                     filter (n == 1) %>%
+                     mutate (diff_from_Year = abs (Year - startYear)) %>%
+                   filter (diff_from_Year < 5) %>%
+                   select (-n, -diff_from_Year),
+                   movies1 %>%
+                     filter (!is.na(tconst)) %>%
+                     group_by (Title) %>%
+                     add_count() %>%
+                     ungroup() %>%
+                     filter (n > 1) %>%
+                     mutate (diff_from_Year = abs (Year - startYear)) %>%
+                     arrange (Title, diff_from_Year) %>%
+                     distinct (Title, Year, .keep_all = T) %>%
+                     select (-n, -diff_from_Year)) %>%
+  select (-ID, -startYear, -Type) %>%
   rename (imdb_genres = genres,
           imdb_runtimeMinutes = runtimeMinutes,
           kaggle_genres = Genres,
@@ -47,142 +77,81 @@ movies_clean = movies %>%
           hulu = Hulu,
           amazonprime = PrimeVideo,
           disneyplus = "Disney+"
-          )
-
-temp = left_join (movies_clean, metadata, by = c("tconst" = "titleId"))
-
-
-movies_check = movies %>%
-  filter (Year != startYear)
+  ) %>%
+  distinct (title, imdb_id, .keep_all = T)
 
 
 
+#only use movie titles that haven't already been matched
+movies = movies %>% 
+  filter (!(Title %in% movies1$title))
 
-
-
-
-
-#2: filter for titles only in the kaggle datasets and select the last season of a tvseries for the "year" (this is how the kaggle dataset decided on the rotten tomatoes score)
-
-
-#3: combine the primary and original titles into one column (primary title is the one used to publicize, original title is usually in the language in which the feature was released)
-titles = rbind (titles %>%
-                  select (-primaryTitle) %>%
-                  rename (ptitle = originalTitle),
-                titles %>%
-                  select (-originalTitle) %>%
-                  rename (ptitle = primaryTitle)) %>%
-  distinct (tconst, ptitle, .keep_all = T)
-
-
-
-#4: change any empty fields in titles or metadata into "NA"
-titles[titles == "\\N"]<-NA
-metadata[metadata == "\\N"]<-NA
-
-#5: add a country of origin field (region is used to determine the primary title for a region, not necessarily the country in which the feature was made)
-metadata1 = metadata %>%
-  arrange(rowSums(is.na(.))) %>%
-  distinct (titleId, .keep_all = T)
-
-# true_region = metadata1 %>%
-#   filter (isOriginalTitle == T) %>%
-#   select (titleId, region) %>%
-#   rename (country_of_origin = region)
-# 
-# metadata1 = metadata %>%
-#   left_join (true_region)
-
-#6: keep entries that have multiple languages as the one that is not "NA" (I manually checked these, and for duplicate entries with differing languages the languages were _ and NA)
-# metadata1 = metadata1 %>%
-#   arrange(titleId, language) %>% 
-#   distinct(titleId, language, .keep_all = TRUE) 
-
-#7: join titles and metadata datasets
 titles = titles %>%
-  left_join (metadata1, by = c("tconst" = "titleId")) %>%
-  filter (ptitle == title ) %>%
-  select (tconst, titleType, runtimeMinutes, genres, title, language)
-
-
-#8: join imdb and kaggle datasets
-
-dat <- left_join (as.data.frame(dat), as.data.frame(titles), by = c("Title" = "title")) #need to check that this is accurate
-
-save(dat, file = "data/clean_dat.rda")
-#ignore anything past this----------
-View(dat)
+  filter (! (tconst %in% movies1$imdb_id)) %>%
+  mutate(bin = ntile(tconst, 10))
 
 
 
-#1: add tv shows and movies to one joint dataset dat
-tvshows <- tvshows %>%
-  select (-1) %>% #remove column of row numbers
-  rename (Type = type,
-          RottenTomatoes = "Rotten Tomatoes",
-          PrimeVideo = "Prime Video")
+#second iteration-- fuzzy join
+for (i in 1:10) {
+  temp_movies = fuzzyjoin::stringdist_left_join (movies, 
+                                                 titles %>%
+                                                   filter (bin == i),
+                                                 by = c("Title" = "title"),
+                                                 max_dist = 1,
+                                                 ignore_case = T,
+                                                 distance_col = "distance") %>%
+    distinct (Title, tconst, .keep_all = T)
+  print (paste (i, "done"))
+  if (i == 1) 
+    movies2 = temp_movies
+  else
+    movies2 = rbind (movies2, temp_movies)
+  
+}
 
-movies <- movies %>%
-  select (-1) %>% #remove column of row numbers 
-  rename (RottenTomatoes = "Rotten Tomatoes",
-          PrimeVideo = "Prime Video") %>%
-  select (names(tvshows))
+sum(!is.na(movies2$tconst))
+nrow(movies2) - length (unique (movies2$Title)) #number of multiple matches to imdb_id
 
-movies$Title = as.character (movies$Title)
-tvshows$Title = as.character (tvshows$Title)
-
-dat <- as.data.frame(rbind (tvshows, movies))
-
-#2: filter for titles and metadata in dat and join with dat
-titles1 <- titles %>%
-  filter (primaryTitle %in% dat$Title | originalTitle %in% dat$Title) %>%
-  select (tconst, titleType, primaryTitle,  originalTitle, runtimeMinutes, genres, startYear) 
-
-titles1 = rbind (titles1 %>%
-                   select (-primaryTitle) %>%
-                   rename (ptitle = originalTitle),
-                 titles1 %>%
-                   select (-originalTitle) %>%
-                   rename (ptitle = primaryTitle)) %>%
-  distinct (tconst, ptitle, .keep_all = T)
-
-
-
-
-titles1[titles1 == "\\N"]<-NA
-
-#filter metadata for US titles
-metadata[metadata == "\\N"]<-NA
-
-true_region = metadata %>%
-  filter (types == "original") %>%
-  select (titleId, region) %>%
-  rename (country_of_origin = region)
-
-metadata1 = metadata %>%
-  left_join (true_region)
-
-titles1 = titles1 %>%
-  left_join (metadata1, by = c("tconst" = "titleId")) %>%
-  filter (ptitle == title ) %>%
-  select (tconst, titleType, runtimeMinutes, genres, title, country_of_origin, language)
+movies2 = rbind (  movies2 %>%
+                     filter (!is.na(tconst)) %>%
+                     group_by (Title) %>%
+                     add_count() %>%
+                     ungroup() %>%
+                     filter (n == 1) %>%
+                     mutate (diff_from_Year = abs (Year - startYear)) %>%
+                     filter (diff_from_Year < 5) %>%
+                     select (-n, -diff_from_Year),
+                   movies2 %>%
+                     filter (!is.na(tconst)) %>%
+                     group_by (Title) %>%
+                     add_count() %>%
+                     ungroup() %>%
+                     filter (n > 1) %>%
+                     mutate (diff_from_Year = abs (Year - startYear)) %>%
+                     arrange (Title, diff_from_Year) %>%
+                     distinct (Title, Year, .keep_all = T) %>%
+                     select (-n, -diff_from_Year)) %>%
+  select (-ID, -startYear, -Type) %>%
+  rename (imdb_genres = genres,
+          imdb_runtimeMinutes = runtimeMinutes,
+          kaggle_genres = Genres,
+          kaggle_runtimeMinutes = Runtime,
+          title = Title,
+          year = Year,
+          age_rating = Age,
+          imdb_score = IMDb,
+          rt_score = RottenTomatoes,
+          directors = Directors,
+          country = Country,
+          language = Language,
+          imdb_id = tconst,
+          netflix = Netflix,
+          hulu = Hulu,
+          amazonprime = PrimeVideo,
+          disneyplus = "Disney+"
+  ) %>%
+  distinct (title, imdb_id, .keep_all = T)
 
 
-titles1 = titles1 %>%
-  arrange(tconst, is.na(language)) %>% 
-  distinct(tconst, .keep_all = TRUE) 
-
-
-dat <- left_join (as.data.frame(dat), as.data.frame(titles1), by = c("Title" = "title")) #need to check that this is accurate
-
-
-
-merged_regions = aggregate(titles1$region, list(titles1$primaryTitle), paste, collapse=",")
-merged_languages = aggregate(titles1$language, list(titles1$primaryTitle), paste, collapse=",")
-tomerge = inner_join (merged_regions, merged_languages, by = "Group.1")
-titles1 = left_join (titles1, tomerge, by = c("primaryTitle" = "Group.1")) %>%
-  select (-c(region, language)) %>%
-  rename (region = x.x,
-          language = x.y)
-
-dat <- left_join (dat, titles1, by = c("Title" = "primaryTitle")) #need to check that this is accurate
+View(movies2)
