@@ -1,6 +1,6 @@
 #This file is just to prep some plots before they get added to the shiny, 
 #since it's easier to play with ggplot without having to think about shiny
-#at the same time.
+#at the same time. Only here for practice and not important to main code.
 
 library(tidyverse)
 library(ggpubr)
