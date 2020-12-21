@@ -6,8 +6,8 @@ library(ggpubr)
 #Load and clean movies data
 #load("../movies.rda")
 
-data_url <- "https://raw.github.com/gnbosma/Streaming_Service_Movie_Rater/main/movies.rda"
-load(url(data_url))
+data_url <- "https://raw.github.com/gnbosma/Streaming_Service_Movie_Rater/main/lm_data.rds"
+movies <- readRDS(url(data_url))
 
 titles <- movies_clean %>% 
     mutate(rt_score = 100 * rt_score,
