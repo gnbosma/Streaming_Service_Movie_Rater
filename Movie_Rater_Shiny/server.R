@@ -4,10 +4,13 @@ library(tidyverse)
 library(ggpubr)
 
 #Load and clean movies data
-load("../movies.rda")
+#load("../movies.rda")
+
+data_url <- "https://raw.github.com/gnbosma/Streaming_Service_Movie_Rater/main/movies.rda"
+load(url(data_url))
 
 titles <- movies_clean %>% 
-    mutate(rt_score = as.numeric(str_remove(rt_score,"%")),
+    mutate(rt_score = 100 * rt_score,
            age_rating = ifelse(age_rating=="all","All Ages",age_rating)
            ) %>% 
     filter(!is.na(imdb_score),!is.na(rt_score))

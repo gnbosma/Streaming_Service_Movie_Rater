@@ -4,7 +4,7 @@ username:
 account: dylanclark-boucher
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 3420838
-bundleId: 4012924
+appId: 3420938
+bundleId: 4013117
 url: https://dylanclark-boucher.shinyapps.io/movie_rater_shiny/
-when: 1608503795.11283
+when: 1608508561.3501

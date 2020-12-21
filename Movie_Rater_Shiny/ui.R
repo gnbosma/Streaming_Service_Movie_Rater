@@ -175,7 +175,7 @@ shinyUI(fluidPage(
                      "), as well as streaming service data accessible for free on",
                      tags$a("Kaggle",href = "https://www.kaggle.com/ruchi798/movies-on-netflix-prime-video-hulu-and-disney"),
                      ", our team constructed a flexible model for predicting",
-                     "overall ratings on a scale of 0 to 5 stars. These predictions depended on",
+                     "overall ratings on a scale of 0 to 10 stars. These predictions depended on",
                      "a user-defined set of covariates, including such factors as a production's",
                      "streaming service(s), target age group, release year, Rotten Tomato's ",
                      tags$a("Average Tomatometer",href = "https://www.rottentomatoes.com/about#whatisthetomatometer"),
