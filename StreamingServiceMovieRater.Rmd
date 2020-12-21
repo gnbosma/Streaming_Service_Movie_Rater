@@ -11,29 +11,36 @@ pacman::p_load(tidyr, dplyr, ggplot2)
 ```
 
 # Objective 
-The objective of this project will be to predict the popular rating of a movie using streaming service, director, actors, and rotten tomatoes rating
+The purpose of this project was to both model and visualize IMDb ratings of movies and films currently available for streaming on various online platforms
 
 # Introduction 
-Pulled from proposal: 
-This may be interesting to look into as many people have purchased an additional streaming service or increased time spent streaming as a result of the COVID-19 pandemic. 
+According to Statista, approximently 74% of homes have access to at least one streaming service in 2019 compared to about 52% in 2015. Additionally, as a result of the COVID-19 pandemic, many consumers have either purchased an additional streaming service subscription or increased time spent streaming. It is clear that movie and TV streaming services are increasing in popularity and are integrated into many of our day to day routines. Just last year, the movie and television streaming industry was valued $42.60 billion USD. Information on the popularity of movies available for streaming is critical to streaming platforms like Netflix, Disney+, Hulu to maintain customer interest in their platform rather than their competitors. 
 
-# Methods 
-The data for this analysis was obtained from a combination of Kaggle and IMBd websites. Information regarding streaming service was pulled from kaggle and contained information on 16,631 movie titles through 16744 observations and 17 variables. To supplement information on ratings and actors involved, two datasets from IMBd were merged. The first, titles, contained 
+# Methods
+The data for this analysis was obtained from either Kaggle or International Movie Database (IMDb) websites. Data regarding streaming service platform was obtained from kaggle whereas information on ratings and actors involved were obtained from IMDb. 
 
+The Kaggle Movie data set contained information on 16,631 movie titles, had 16744 observations and 17 variables including XXX. During cleaning, movies with XXX were excluded. The final kaggle data set consisted of XXX instances 
 
-- data Sources 
-- data cleaning and merging process
+Actors and rating information was obtained from IMDb in two separate data sets. The first, containing information on ratings, contained information on XXX films. 
+
+The second IMBd data set contained information on actors and held information on 6,414,148 movie production team members, four "Known For" film names associated with each actor or actress, and additional roles the actor or actress held (i.e. writer, producer, ...). During cleaning, those that did not hold an actor/actress role or had no "known for" titles were excluded from analyses. The final, cleaned IMBd actors dataset held information on 2,426,996 actors or actresses. 
+
+[revisit include info on final merge. include info on final size and final variables i]
 
 # Prediction
 - lm??
-
+  
+  
 # Discussion
-- 
+from Rshiny:
+Based on ratings data from the International Movie Database ( IMDb ), as well as streaming service data accessible for free on Kaggle , our team constructed a flexible model for predicting overall ratings on a scale of 0 to 5 stars. These predictions depended on a user-defined set of covariates, including such factors as a production's streaming service(s), target age group, release year, Rotten Tomato's Average Tomatometer score, and others.
 
 # Vizualization
-- 
+ 
 
 # RShiny Application
+
+```https://dylanclark-boucher.shinyapps.io/movie_rater_shiny/ ```
+
 - mention things that you can adjust / filter by 
 - include an example ? 
-
