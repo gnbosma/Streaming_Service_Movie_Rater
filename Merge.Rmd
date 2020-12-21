@@ -1,0 +1,55 @@
+---
+title: "Merge"
+author: "Grace Bosma"
+date: "Due: 12/22/2020"
+output: html_document
+---
+
+```{r}
+#load movies, actors, kaggle respectively 
+load( "movies.rda") 
+load("~/actors.rda") 
+```
+
+### Actors
+First, consider actors dataset; need to change from one actor & multiple movies per row to one actor & one movie per row. 
+```{r}
+#Filter movies out that are not included in Kaggle Dataset 
+movies <- unique(movies_clean$imdb_id)
+actors <- actors %>% filter (T1 %in% movies | T2 %in% movies | T3 %in% movies | T4 %in% movies)
+
+# melt so we have one row per film/movie
+actors_long <- as.data.frame(actors %>% select(nconst, primaryName, T1, T2, T3, T4))
+actors_long <- melt(actors_long, id = c('nconst', 'primaryName'))
+
+# melt 
+numactors_long <- as.data.frame(actors %>% select(nconst, num_actors1, num_actors_2, num_actors3, num_actors4))
+numactors_long <- melt(numactors_long, id = c('nconst'))
+
+# merge; now we have one row per movie with num_actors associated with movie and imbd_id
+actors_final <- cbind(actors_long, numactors_long)
+colnames(actors_final)[c(4, 7)] <- c("imdb_id", 'num_actors')
+actors_final <- actors_final[,-c(5:6)]
+
+# pull additional roles 
+add_roles <-as.data.frame(actors %>% select(nconst, prod, writer, dir, add_role, score1, score2, score3))
+actors_final <- left_join(actors_final, add_roles, by = "nconst")
+
+# remove interum data sets used in merge
+rm(actors_long, add_roles, numactors_long, movies)
+```
+
+### Merge with kaggle dataset
+```{r}
+final_w_na <- left_join(actors_final, movies_clean, by = "imdb_id")
+FINAL <- final_w_na[complete.cases(final_w_na$title),]
+
+#to clear old data sets from environment:
+#rm(actors, actors_final, movies_clean)
+```
+
+### Save
+```{r}
+save(FINAL, file = here::here("FINAL.rda"))
+save(final_w_na, file = here::here("final_w_na.rda"))
+```

@@ -56,7 +56,7 @@ There are four tabs in the upper left that allows you to navigate through the ap
 - potentially integrate an example here?  
 
 # Discussion 
-- conclusionfrom lm model 
+- conclusion from lm model 
   - what variables are important
   - did we predict well 
 - future direction
