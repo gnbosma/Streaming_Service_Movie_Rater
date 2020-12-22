@@ -6,14 +6,13 @@ library(ggpubr)
 #Load and clean movies data
 #load("../movies.rda")
 
-data_url <- "https://raw.github.com/gnbosma/Streaming_Service_Movie_Rater/main/lm_data.rds"
-movies <- readRDS(url(data_url))
+data_url <- "https://raw.github.com/gnbosma/Streaming_Service_Movie_Rater/main/lm_data.rda"
+load(url(data_url))
 
-titles <- movies_clean %>% 
-    mutate(rt_score = 100 * rt_score,
-           age_rating = ifelse(age_rating=="all","All Ages",age_rating)
+titles <- lm_data %>% ungroup() %>% 
+    mutate(age_rating = ifelse(age_rating=="all","All Ages",age_rating)
            ) %>% 
-    filter(!is.na(imdb_score),!is.na(rt_score))
+    filter(!is.na(imdb_score))
 
 #Create list documenting service names, labels, and colors
 service_list <- c()
@@ -38,6 +37,7 @@ inRange <- function(x,range){
 #The server
 shinyServer(function(input, output) {
     
+    #Primary histogram for first page
     output$histplot <- renderPlot({
         
         #Filter according to inputs
@@ -49,7 +49,8 @@ shinyServer(function(input, output) {
              filter(right_service,
                     inRange(rt_score, input$tscore),
                     inRange(year,input$yr),
-                    age_rating %in% input$ages
+                    age_rating %in% input$ages,
+                    !is.na(rt_score),!is.na(age_rating)
                     )
         
         #Make sure bin count is fine
@@ -84,9 +85,11 @@ shinyServer(function(input, output) {
 
     })
     
+    #Boxplots for streaming services
     output$service_plot <- renderPlot({
         sp <-c()
         
+        #Iterate through each service and create boxplot
         for(service in names(service_list)){
             right_service <- titles[[service]]==1
             
@@ -117,12 +120,14 @@ shinyServer(function(input, output) {
             
             sp[[service]] <- p
         }
-
+        
+        #Arrange plots
         ggarrange(plotlist = sp, nrow = 1)
         
         
     })
     
+    #Boxplots for age ratings
     output$age_plot <- renderPlot({
         ap <- c()
         age_groups <- c("All Ages","7+","13+","16+","18+")
@@ -130,6 +135,7 @@ shinyServer(function(input, output) {
                         "firebrick3","sienna2")
         names(age_colors) <- age_groups
         
+        #Iterate through each age rating 
         for(age in age_groups){
             p <- titles %>% 
                 filter(age_rating == age) %>% 
@@ -159,6 +165,7 @@ shinyServer(function(input, output) {
         
     })
     
+    #Scatterplot of IMDb ratings by rotten tomatoes ratings
     output$ts_plot <- renderPlot({
         right_service <- titles %>% 
             select(all_of(input$ts_service)) %>% 
@@ -179,7 +186,61 @@ shinyServer(function(input, output) {
         
         
     })
+    
+    # #Table for model output 
+    # output$lm_table <- renderDataTable({
+    #     
+    #     #Create linear model
+    #     form <- "imdb_score ~ disneyplus + hulu + netflix + amazonprime"
+    #     
+    #     include_vars <- c("rt_score", "actor_score1")
+    #     
+    #     if(length(include_vars) > 0){
+    #       
+    #         form <- paste(form, paste(include_vars, collapse = " + "), sep = " + ")            
+    #         
+    #     }
+    #     
+    #     linear_model <- lm(formula = formula(form), data = titles)
+    #     
+    #     results <- as.data.frame(summary(linear_model)$coefficients)
+    #     # results <- results %>% mutate(Variable = rownames(results)) %>% 
+    #     #     select(Variable,everything())
+    #    # results$var <- rownames(results)
+    #     cbind(rownames(results),data.frame(results,row.names = NULL))
+    # 
+    #     
+    #     
+    # })
 
+    
+    
+    #Fit linear model
+    lm_result <- reactive({
+        
+         #Create formula based on input
+         form <- "imdb_score ~ disneyplus + hulu + netflix + amazonprime"
+     
+         if(length(input$include_vars) > 0){
+             
+             form <- paste(form, paste(input$include_vars, collapse = " + "), sep = " + ")            
+             
+         }
+         
+         #Fit model and format output
+         linear_model <- lm(formula = formula(form), data = titles)
+         results <- as.data.frame(summary(linear_model)$coefficients)
+         results <- cbind(rownames(results),round(data.frame(results,row.names = NULL),3))
+         results  
+    })
+    
+     
+     #Produce Table for model
+     output$lm_table1 <- DT::renderDataTable(
+         
+         DT::datatable(lm_result(), options = list(paging = FALSE, searching = FALSE))
+         
+     )
     
     
     

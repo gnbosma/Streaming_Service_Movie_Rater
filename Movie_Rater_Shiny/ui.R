@@ -161,7 +161,33 @@ shinyUI(fluidPage(
             ),
         
         #Score Prediction Panel
-        tabPanel("Score Prediction"
+        tabPanel("Score Prediction",
+                 titlePanel("Linear Model for Predicting IMDb Ratings"),
+                 
+                 sidebarLayout(
+                     sidebarPanel(
+                         tags$h3("Select Model Variables"),
+                         checkboxGroupInput("include_vars","variables",
+                                            choices = list(
+                                                "Tomatometer Score" = "rt_score",
+                                                "Age Rating" = "age_rating",
+                                                "Release Year" = "year",
+                                                "Cast Score 1" = "actor_score1",
+                                                "Cast Score 2" = "actor_score2",
+                                                "Cast Score 3" = "actor_score3"
+                                            ),
+                                            selected = c())
+                         ),
+                               
+                               mainPanel(
+                                   fluidRow("Just some text here explaining what's going on."),
+                                   tags$hr(),
+                                   fluidRow(DT::dataTableOutput("lm_table1"))
+                                   )
+                               
+                               
+                 )
+                 
             
             ),
         
