@@ -85,7 +85,32 @@ rt_p <- movies_clean %>% select(year, rt_score ) %>% ggplot(aes(year, rt_score))
 gridExtra::grid.arrange(imdb_p, rt_p, ncol=2)
 ```
 
+
 - not married to these plots just figured we should show something 
+
+
+```{r rt vs imdb, message = F}
+
+streaming_services = c("hulu (n = 332)", "disneyplus (n = 260)", "netflix (n = 1421)", "amazonprime (n = 5527)")
+
+lm_data$availability = streaming_services[apply(lm_data[,c("hulu", "disneyplus", "netflix", "amazonprime")],1,which.max)]
+lm_data = lm_data %>%
+  mutate (availability = ifelse (sum (hulu + disneyplus + netflix + amazonprime) > 1,
+                                 "multiple (n = 380)",
+                                 availability))
+          
+
+ggplot (data = lm_data) +
+  geom_point (aes (x = rt_score, y = imdb_score, color = availability), alpha = 0.7) +
+  facet_wrap(~availability) +
+  theme_bw() +
+  ggtitle("Association of Rotten Tomatoes Score vs. IMDb Score")
+  
+```
+
+When we plot rt_score vs. imdb_score, we see that there is a positive association between the two across all platforms. 
+
+
 
 # RShiny Application
 An [RShiny Application](https://dylanclark-boucher.shinyapps.io/movie_rater_shiny/) was created using our data set to display our results and can be accessed at:  
