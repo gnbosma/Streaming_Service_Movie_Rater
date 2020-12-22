@@ -51,7 +51,7 @@ m1 <- randomForest(
   formula = model_form,
   data = lm_data[complete.cases(lm_data),]
 )
-which.min(m1$mse)
+
 
 ```
 The default forest used 500 trees and chose 3 predictor variables at each split. When we plot the model, we see that we obtain the lowest error rate with `r which.min(m1$mse)` trees. 
