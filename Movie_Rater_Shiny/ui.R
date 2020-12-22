@@ -1,22 +1,27 @@
+#UI for Shiny App
 
 library(shiny)
 library(shinythemes)
-# Define UI for application that draws a histogram
+library(DT)
+
 shinyUI(fluidPage(
     theme = shinytheme("yeti"),
     
+    #Split webpage into several tabs
     tabsetPanel(
+        
+        #Tab 1: Ratings filter tool
         tabPanel("Ratings Filter Tool",
                  
-                 # Application title
+                 # Tab title
                  titlePanel("Distribution of Movie Ratings"),
                  
-                 # Sidebar with user input
+
                  sidebarLayout(
                      
+                     #Sidebar for user input
                      sidebarPanel(
                          
-                         #Side Panel Row One
                         fluidRow(
                              tags$h3("Filter"),
                              
@@ -43,13 +48,11 @@ shinyUI(fluidPage(
                             )),
                         
                          
-                         fluidRow(#Side Panel Row 2
+                         fluidRow(
 
                         sliderInput("tscore", label = "Tomatometer Score", min = 0, 
                                          max = 100, value = c(0,100)
                                          ),
-                             
-
                              
                              sliderInput("yr",label = "Release year",
                                          min = 1901,
@@ -59,8 +62,16 @@ shinyUI(fluidPage(
                     
                          width = 2.5)),
                      
-                     # Show a plot of the generated distribution
+                     # Main panel with plot and extra options
                      mainPanel(
+                         fluidRow(
+                             "This app was built for the purpose of modeling and visualizing the IMDb ratings",
+                             "of movies on different streaming platforms. Let's get started. Adjust the parameters",
+                             "in the tab to the left to view the ratings distributions of different sets of movies.",
+                             "Even better, choose the options above the figure to change the color of histogram or the ",
+                             "number of bins."
+                         ),
+                         tags$hr(),
                          fluidRow(
                              column(8,
                                     sliderInput("bins",
@@ -89,15 +100,19 @@ shinyUI(fluidPage(
             
         ),
         
-        #Ratings by category panel
+        #Tab 2: Ratings by category
         tabPanel("Ratings by Category",
+                 
+                #Several tabs within this page. One for each category.
                 navlistPanel(
+                    
+                    #Streaming service tab
                     tabPanel("Streaming Service",
                              titlePanel("Ratings by Streaming Service"),
                              fluidRow(column(10, offset = 1, 
                                       "Below are the distributions of movie ratings for each streaming service.", 
-                                      "Our dataset contained 299 movies from Disney+, 538 from Hulu, 1,862 from Netflix,", 
-                                      "and 6,700 from Amazon Prime Video, for a total of 8,970 unique films. Note that, since some",
+                                      "Our dataset contained 287 movies from Disney+, 499 from Hulu, 1,629 from Netflix,", 
+                                      "and 5,858 from Amazon Prime Video, for a total of 8,970 unique films. Note that, since some",
                                       "movies might be available on more than one platform, these groupings",
                                       "are not mutually exclusive. Overall, differences in IMDb Ratings across streaming",
                                       "platforms appear to be small.")),
@@ -105,18 +120,21 @@ shinyUI(fluidPage(
                             fluidRow(column(10, offset = 1, plotOutput("service_plot")))
                             ),
                     
+                    #Age rating tab
                     tabPanel("Age Rating",
                              titlePanel("Ratings by Age Groups"),
                              fluidRow(column(10, offset = 1,
                                       "The movies we looked at spanned all genres and all age groups.",
-                                      "There were 379 designated for all ages, 881 for ages 7+,",
-                                      "819 for ages 13+, 189 for ages 16+, and a massive 2,188 for ages 18+.",
+                                      "There were 325 designated for all ages, 790 for ages 7+,",
+                                      "764 for ages 13+, 165 for ages 16+, and a massive 2,126 for ages 18+.",
                                       "The ratings distributions across these groups once again appear to be",
                                       "quite similar, though the 16+ group had the highest median score.")),
                              tags$hr(),
                              fluidRow(column(10, offset = 1, plotOutput("age_plot")))
                         
                     ),
+                    
+                    #Tomatometer tab
                     tabPanel("Tomatometer Score",
                              titlePanel("Ratings by Tomatometer Score"),
                              fluidRow(column(10, offset = 1,
@@ -160,14 +178,15 @@ shinyUI(fluidPage(
                 
             ),
         
-        #Score Prediction Panel
+        #Tab 3: Linear model
         tabPanel("Score Prediction",
                  titlePanel("Linear Model for Predicting IMDb Ratings"),
                  
                  sidebarLayout(
+                     
+                     #Side bar with user input
                      sidebarPanel(
-                         tags$h3("Select Model Variables"),
-                         checkboxGroupInput("include_vars","variables",
+                         checkboxGroupInput("include_vars",tags$strong("Variables"),
                                             choices = list(
                                                 "Tomatometer Score" = "rt_score",
                                                 "Age Rating" = "age_rating",
@@ -176,14 +195,24 @@ shinyUI(fluidPage(
                                                 "Cast Score 2" = "actor_score2",
                                                 "Cast Score 3" = "actor_score3"
                                             ),
-                                            selected = c())
+                                            selected = c()),
+                         width = 2
                          ),
-                               
-                               mainPanel(
-                                   fluidRow("Just some text here explaining what's going on."),
-                                   tags$hr(),
-                                   fluidRow(DT::dataTableOutput("lm_table1"))
-                                   )
+                       
+                     #Main panel with model output
+                       mainPanel(
+                           fluidRow("Included below is the output of a linear model",
+                                    " for predicting IMDb ratings. By default, the model",
+                                    "uses each of our streaming services as a binary predictor,",
+                                    " providing insight to the mean difference in IMDb score between ",
+                                    "moves that are available and unavailable on those platforms.",
+                                    " We can see that all four estimates are significant,",
+                                    " providing statistical evidence that movies on different platforms",
+                                    " have different ratings on average. To add more variables to the model",
+                                    "use the side tab to the left."),
+                           tags$hr(),
+                           fluidRow(DT::dataTableOutput("lm_table1"))
+                           )
                                
                                
                  )
@@ -191,7 +220,9 @@ shinyUI(fluidPage(
             
             ),
         
+        #Tab 4: About page
         tabPanel("About",
+                 
                  tags$p(
                      tags$h3("Background"),
                      "The purpose of this project was to both model and visualize the IMDb ",
@@ -205,21 +236,17 @@ shinyUI(fluidPage(
                      "a user-defined set of covariates, including such factors as a production's",
                      "streaming service(s), target age group, release year, Rotten Tomato's ",
                      tags$a("Average Tomatometer",href = "https://www.rottentomatoes.com/about#whatisthetomatometer"),
-                     "score, and others."
+                     "score, and our own set of variables called \"Cast Scores\". Additional information",
+                     " on our model, visualizations, and code can be found on our ",
+                     tags$a("GitHub repository",href ="https://github.com/gnbosma/Streaming_Service_Movie_Rater"),
+                     ", under the file StreamingServiceMovieRater.rmd."
                  ),
-                 tags$p(
-                     tags$h3("Streaming Service Movie Raters"),
-                     "About the app, the model, etc"
-                     
-                 ),
+                 
                  tags$p(
                      tags$h3("Contributors"),
                      "This software was developed by Grace Bosma, Dylan Clark-Boucher, and Chris",
                      "Shin, all current students in the University of Michigan Department of Biostatistics,",
-                     "as part of the course \"BIOSTAT 625: Big Data Computing.\" Additional information on",
-                     "our model, visualizations, and code can be found on our ",
-                     tags$a("GitHub repository",href ="https://github.com/gnbosma/Streaming_Service_Movie_Rater"),
-                     "."
+                     "as part of the course \"BIOSTAT 625: Big Data Computing.\""
                  )
             )
         )

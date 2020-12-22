@@ -2,13 +2,13 @@ library(shiny)
 library(shinythemes)
 library(tidyverse)
 library(ggpubr)
+library(DT)
 
 #Load and clean movies data
-#load("../movies.rda")
-
 data_url <- "https://raw.github.com/gnbosma/Streaming_Service_Movie_Rater/main/lm_data.rda"
 load(url(data_url))
 
+#Tweak data
 titles <- lm_data %>% ungroup() %>% 
     mutate(age_rating = ifelse(age_rating=="all","All Ages",age_rating)
            ) %>% 
@@ -80,9 +80,6 @@ shinyServer(function(input, output) {
                 plot.title = element_text(size = 16, hjust = 0.5),
                 axis.line.x = element_line(color = "darkgrey",size = 1)
             )
-        
-        
-
     })
     
     #Boxplots for streaming services
@@ -106,7 +103,8 @@ shinyServer(function(input, output) {
                     panel.grid = element_blank(),
                     plot.title = element_text(hjust = 0.5)
                 )
-            if(service!="disneyplus"){
+            
+            if(service != "disneyplus"){
                 p <- p + theme(axis.text.y = element_blank()) + 
                     labs(y = "", 
                          title = service_list[[service]]["label"])
@@ -167,12 +165,15 @@ shinyServer(function(input, output) {
     
     #Scatterplot of IMDb ratings by rotten tomatoes ratings
     output$ts_plot <- renderPlot({
+        
+        #Create service filter
         right_service <- titles %>% 
             select(all_of(input$ts_service)) %>% 
             rowSums() %>% as.logical()
         
+        #Filter data, then plot
         titles %>% 
-            filter(right_service,
+            filter(right_service, !is.na(rt_score),
                    age_rating %in% input$ts_ages) %>% 
             ggplot(aes(x = rt_score, y = imdb_score)) +
             geom_point(color = "orchid4",
@@ -183,37 +184,7 @@ shinyServer(function(input, output) {
             labs(x = "Tomatometer Score", y ="IMDb Ratings",
                  title = "IMDb Movie Ratings by Tomatometer Score")+
             theme(plot.title = element_text(size = 14))
-        
-        
     })
-    
-    # #Table for model output 
-    # output$lm_table <- renderDataTable({
-    #     
-    #     #Create linear model
-    #     form <- "imdb_score ~ disneyplus + hulu + netflix + amazonprime"
-    #     
-    #     include_vars <- c("rt_score", "actor_score1")
-    #     
-    #     if(length(include_vars) > 0){
-    #       
-    #         form <- paste(form, paste(include_vars, collapse = " + "), sep = " + ")            
-    #         
-    #     }
-    #     
-    #     linear_model <- lm(formula = formula(form), data = titles)
-    #     
-    #     results <- as.data.frame(summary(linear_model)$coefficients)
-    #     # results <- results %>% mutate(Variable = rownames(results)) %>% 
-    #     #     select(Variable,everything())
-    #    # results$var <- rownames(results)
-    #     cbind(rownames(results),data.frame(results,row.names = NULL))
-    # 
-    #     
-    #     
-    # })
-
-    
     
     #Fit linear model
     lm_result <- reactive({
@@ -227,10 +198,29 @@ shinyServer(function(input, output) {
              
          }
          
-         #Fit model and format output
+         #Fit model and format output table
          linear_model <- lm(formula = formula(form), data = titles)
          results <- as.data.frame(summary(linear_model)$coefficients)
          results <- cbind(rownames(results),round(data.frame(results,row.names = NULL),3))
+         colnames(results) <- c("Variable","Estimate","SE", "Test Stat", "p Value")
+         rows <- results$Variable
+         results$Variable <- case_when(
+             rows == "(Intercept)" ~ "Intercept",
+             rows == "disneyplus" ~ "Disney+",
+             rows == "amazonprime" ~ "Prime Video",
+             rows == "netflix" ~ "Netflix",
+             rows == "hulu" ~ "Hulu",
+             rows == "rt_score" ~ "Tomatometer",
+             rows == "age_rating16+" ~ "Age: 16+",
+             rows == "age_rating13+" ~ "Age: 13+",
+             rows == "age_rating18+" ~ "Age: 18+",
+             rows == "age_rating7+" ~ "Age: 7+",
+             rows == "age_ratingAll Ages" ~ "Age: All",
+             rows == "year" ~ "Release Year",
+             rows == "actor_score1" ~ "Cast Score 1",
+             rows == "actor_score2" ~ "Cast Score 2",
+             rows == "actor_score3" ~ "Cast Score 3"
+         )
          results  
     })
     
@@ -241,7 +231,4 @@ shinyServer(function(input, output) {
          DT::datatable(lm_result(), options = list(paging = FALSE, searching = FALSE))
          
      )
-    
-    
-    
 })
