@@ -38,7 +38,7 @@ Results for our linear models are included in the Shiny app (described below). T
 ## Random Forest
 Random forest is a method of fitting multiple decision trees using a technique called bagging, which introduces randomness into each tree building process and averages the results across multiple trees. Random forest can be used for regression and classification tasks but requires complete datasets. We chose to implement random forest to observe the predictive ability of variables we chose to include in the linear regression models. Random forest is ideal for our situation because our final dataset is not too large. 
 
-```{r random forest initial, message = F, echo = T}
+```{r random forest initial, message = F, echo = F}
 load("lm_data.rda")
 library (randomForest)
 
