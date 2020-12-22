@@ -15,12 +15,12 @@ load(file = "movies.rda")
 # Objective 
 The purpose of this project was to both model and visualize IMDb ratings of movies and films currently available for streaming on various online platforms
 
-# Introduction 
+# Background
 According to Statista, approximently 74% of homes have access to at least one streaming service in 2019 compared to about 52% in 2015. Additionally, as a result of the COVID-19 pandemic, many consumers have either purchased an additional streaming service subscription or increased time spent streaming. It is clear that movie and TV streaming services are increasing in popularity and are integrated into many of our day to day routines. Just last year, the movie and television streaming industry was valued $42.60 billion USD. Information on the popularity of movies available for streaming is critical to streaming platforms like Netflix, Disney+, Hulu to maintain customer interest in their platform rather than their competitors. 
 
 # Methods
 ## Data Cleaning (see cleaning_data.Rmd for details)
-The data for this analysis was obtained from either Kaggle or International Movie Database (IMDb) websites. Data regarding streaming service platform and ratings from IMDb and Kaggle was obtained from Kaggle whereas information on actors involved in movies were obtained from IMDb. 
+The data for this analysis was obtained from either Kaggle or International Movie Database (IMDb) websites. Data regarding streaming service platform and ratings was obtained from Kaggle whereas information on actors involved in movies were obtained from IMDb. 
 
 The [Kaggle Movie data set](https://www.kaggle.com/ruchi798/movies-on-netflix-prime-video-hulu-and-disney) was downloaded on 12/4/2020. This dataset contained information on movies available on various streaming services as of May 22, 2020 from US locations. In the dataset there were 16,631 movie titles (entries) and 16 variables including imdb_id (IMDb-specific id), title, year (of release), age_rating (7+, 13+, 16+, 18+, or all), imdb_score (rating from IMDb, which is aggregated from IMDb registered users who cast a vote from 1 to 10 per title), rt_score (TOMATOMETER score from Rotten Tomatoes), netflix (whether it was available on Netflix), hulu (whether it was available on Hulu), amazonprime (whether it was available on Amazon Prime Video), disneyplus (whether it was available on Disney+), type (whether it was a movie or not), directors, genres, country (of origin), languages (in which the movie is available, either voice dubbed or subtitles), and runtime (length of movie). During cleaning, movies that did not match to titles on IMDb were excluded. The final movie data set consisted of 11448 titles. 
 
@@ -39,7 +39,7 @@ The outcome to predict was imdb_score for both methods.
 ## Random Forest
 Random forest is a method of fitting multiple decision trees using a technique called bagging, which introduces randomness into each tree building process and averages the results across multiple trees. Random forest can be used for regression and classification tasks but requires complete data sets. We chose to implement random forest to observe the predictive ability of variables we chose to include in the linear regression models. Random forest is ideal for our situation because our final dataset is not too large. 
 
-```{r random forest initial, message = F}
+```{r random forest initial, message = F, echo = F}
 load("lm_data.rda")
 library (randomForest)
 
@@ -60,7 +60,7 @@ The default forest used 500 trees and chose 3 predictor variables at each split.
 
 Because our goal for the random forest was to determine important variables, we did not continue with tuning the random forest and chose to look at the variable importance plot using a slightly modified random forest. 
 
-```{r random forest modified}
+```{r random forest modified, echo=FALSE}
 m2 <- randomForest(
   formula = model_form,
   data    = lm_data[complete.cases(lm_data),],
@@ -77,7 +77,7 @@ See section on RShiny Application for details.
 
 
 # Vizualization
-```{r, echo = FALSE, warning=FALSE}
+```{r, echo = FALSE, warning=FALSE, echo=F}
 imdb_p <- movies_clean %>% select(year, imdb_score) %>% ggplot(aes(year, imdb_score)) + geom_point(col = 'plum4')+ gbtheme + ggtitle("IMDB Rating Over Time") + ylab("IMDB Score")
 
 rt_p <- movies_clean %>% select(year, rt_score ) %>% ggplot(aes(year, rt_score)) + geom_point(col = 'steelblue4')+ gbtheme + ggtitle("Rotten Tomato Rating Over Time") + ylab("Rotten Tomato Score")
@@ -89,7 +89,7 @@ gridExtra::grid.arrange(imdb_p, rt_p, ncol=2)
 - not married to these plots just figured we should show something 
 
 
-```{r rt vs imdb, message = F, warning = F}
+```{r rt vs imdb, message = F, warning = F,echo=F}
 
 streaming_services = c("hulu (n = 332)", "disneyplus (n = 260)", "netflix (n = 1421)", "amazonprime (n = 5527)")
 
@@ -123,7 +123,8 @@ When we plot rt_score vs. imdb_score, we see that there is a positive associatio
 An [RShiny Application](https://dylanclark-boucher.shinyapps.io/movie_rater_shiny/) was created using our data set to display our results and can be accessed at:  
 ```https://dylanclark-boucher.shinyapps.io/movie_rater_shiny/```
 
-There are four tabs in the upper left that allows you to navigate through the application; Ratings Filter Tool, Ratings by Category, Score Prediction, and About. The Ratings filter tool presents a histogram and box plot of movie ratings and allows the user to filter based on recommended age of target audience, streaming service, Rotten Tomato Score, and release year and select a preferred choice of graph color and bin width. The Ratings By Category page presents three tabs on the left side bar. The first, Streaming Service, presents the distributions of movie ratings for each streaming service in a box plot format. The second, Age Rating, presents the distributions of movie ratings for by age group in a box plot format. The third, presents a scatter plot of IMBd movie ratings plotted against Tomatometer Score. Below the scatter plot the user is again able to filter but age group and streaming service. THe third tab, Score Prediction, [FILL IN LATER XXX]. The final tab, About, briefly summarized the background, app, model and contributors.  
+There are four tabs in the upper left that allows you to navigate through the application; Ratings Filter Tool, Ratings by Category, Score Prediction, and About. The Ratings filter tool presents a histogram and box plot of movie ratings and allows the user to filter based on recommended age of target audience, streaming service, Rotten Tomato Score, and release year and select a preferred choice of graph color and number of bins. The second tab, Ratings By Category, presents three sections for visualizing IMDb scores across different variables. The user can see ratings distributions for each streaming platform and each age group, as well as a scatterplot of IMDb ratings by Tomatometer scores.
+The third tab, Score Prediction, shows the coefficient estimates of a linear model for predicting IMDb scores based on streaming platform. The user can additionally select other variables to be included as coviariates, such as release year, rotten tomato score, age rating, and cast score,  The final tab, About, briefly summarized the background, app, model and contributors.  
 
 - potentially integrate an example here?  
 
