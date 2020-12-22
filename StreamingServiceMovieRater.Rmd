@@ -19,20 +19,62 @@ The purpose of this project was to both model and visualize IMDb ratings of movi
 According to Statista, approximently 74% of homes have access to at least one streaming service in 2019 compared to about 52% in 2015. Additionally, as a result of the COVID-19 pandemic, many consumers have either purchased an additional streaming service subscription or increased time spent streaming. It is clear that movie and TV streaming services are increasing in popularity and are integrated into many of our day to day routines. Just last year, the movie and television streaming industry was valued $42.60 billion USD. Information on the popularity of movies available for streaming is critical to streaming platforms like Netflix, Disney+, Hulu to maintain customer interest in their platform rather than their competitors. 
 
 # Methods
+## Data Cleaning (see cleaning_data.Rmd for details)
 The data for this analysis was obtained from either Kaggle or International Movie Database (IMDb) websites. Data regarding streaming service platform and ratings from IMDb and Kaggle was obtained from Kaggle whereas information on actors involved in movies were obtained from IMDb. 
 
-The Kaggle Movie data set (link:  https://www.kaggle.com/ruchi798/movies-on-netflix-prime-video-hulu-and-disney) was downloaded on 12/4/2020. This dataset contained information on movies available on various streaming services as of May 22, 2020 from US locations. In the dataset there were 16,631 movie titles (entries) and 17 variables including Title, Year, Age, IMDb (rating from IMDb, which is aggregated from IMDb registered users who cast a vote from 1 to 10 per title), Rotten.Tomatoes (TOMATOMETER score from Rotten Tomatoes), Netflix (whether it was available on Netflix), Hulu (whether it was available on Hulu), Prime.Video (whether it was available on Amazon Prime Video), Disney (whether it was available on Disney+), Type (whether it was a movie), Directors, Genres, Country, Languages, and Runtime. During cleaning, movies that did not match to titles on IMDb were excluded. The final movie data set consisted of 11448 titles.  
+The [Kaggle Movie data set](https://www.kaggle.com/ruchi798/movies-on-netflix-prime-video-hulu-and-disney) was downloaded on 12/4/2020. This dataset contained information on movies available on various streaming services as of May 22, 2020 from US locations. In the dataset there were 16,631 movie titles (entries) and 16 variables including imdb_id (IMDb-specific id), title, year (of release), age_rating (7+, 13+, 16+, 18+, or all), imdb_score (rating from IMDb, which is aggregated from IMDb registered users who cast a vote from 1 to 10 per title), rt_score (TOMATOMETER score from Rotten Tomatoes), netflix (whether it was available on Netflix), hulu (whether it was available on Hulu), amazonprime (whether it was available on Amazon Prime Video), disneyplus (whether it was available on Disney+), type (whether it was a movie or not), directors, genres, country (of origin), languages (in which the movie is available, either voice dubbed or subtitles), and runtime (length of movie). During cleaning, movies that did not match to titles on IMDb were excluded. The final movie data set consisted of 11448 titles. 
 
-Data made publicly available on the website IMDb is updated daily and available for download from the website https://www.imdb.com/interfaces/ . The dataset "name.basics.tsv.gz" was downloaded from IMDb pm 12/4/2020 and used in this project. This data set contained information on actors and held information on 6,414,148 movie production team members, four "Known For" film names associated with each actor or actress, and additional roles the actor or actress held (i.e. writer, producer, ...). During cleaning, those that did not hold an actor/actress role or had no "known for" titles were excluded from analyses. The final, cleaned IMBd actors dataset held information on 2,426,996 actors or actresses. 
+Data made publicly available on the website IMDb is updated daily and [available for download](https://www.imdb.com/interfaces/). The dataset "name.basics.tsv.gz" was downloaded from IMDb on 12/4/2020 and used in this project. This data set contained information on actors and held information on 6,414,148 movie production team members, four "Known For" film names associated with each actor or actress, and additional roles the actor or actress held (i.e. writer, producer, ...). During cleaning, those that did not hold an actor/actress role or had no "known for" titles were excluded from analyses. The final, cleaned IMBd actors dataset held information on 2,426,996 actors or actresses. 
 
-Data for prediction using linear regression and random forest required complete cases, and the variables we chose to include were age_rating (7+, 13+, 16+, 18+, or all), hulu (whether it was available on Hulu), disneyplus (whether it was available on Disney+), netflix (whether it was available on Netflix), amazonprime (whether it was available on Amazon Prime), year (the year the movie was released), rt_score (TOMATOMETER score from Rotten Tomatoes), imdb_score (rating from IMDb, which is aggregated from IMDb registered users who cast a vote from 1 to 10 per title), actor_score1, actor_score2, and actor_score3. 
+Using the actors dataset, we created three variables specific to each actor/actress to use to describe movie titles. Score1 takes into account the number of actors/actresses involved in the titles the specific actor/actress was known for, score2 considers the number of titles and additional roles the actor/actress took on, and score3 prioritizes producers, directors, and writers, respectively. 
 
-- include something about any new variables created?
+## Data Merging (see merging_data.Rmd for details)
+We merged the movies dataset from Kaggle and the actors dataset from IMDb using the unique imdb_id associated with each title. The final merged dataset contained 139,772 observations. 
 
 # Prediction
-Based on ratings data mentioned above, a flexible model was constructed for predicting overall ratings on a scale of 0 to 5 stars. These predictions depended on a user-defined set of covariates, including such factors as a production's streaming service(s), target age group, release year, Rotten Tomato's Average Tomatometer score, and others.
+Data for prediction using linear regression and random forest required complete cases, and the variables we chose to include were hulu, disneyplus, netflix, amazonprime, year, rt_score, imdb_score, actor_score1, actor_score2, and actor_score3. 
 
-- lm model
+The outcome to predict was imdb_score for both methods. 
+
+## Random Forest
+Random forest is a method of fitting multiple decision trees using a technique called bagging, which introduces randomness into each tree building process and averages the results across multiple trees. Random forest can be used for regression and classification tasks but requires complete data sets. We chose to implement random forest to observe the predictive ability of variables we chose to include in the linear regression models. Random forest is ideal for our situation because our final dataset is not too large. 
+
+```{r random forest initial, message = F}
+load("lm_data.rda")
+library (randomForest)
+
+set.seed(123)
+
+
+model_form <- imdb_score ~ rt_score + year + disneyplus + hulu + 
+  amazonprime + netflix + actor_score1 + actor_score2 + actor_score3
+
+m1 <- randomForest(
+  formula = model_form,
+  data = lm_data[complete.cases(lm_data),]
+)
+which.min(m1$mse)
+
+```
+The default forest used 500 trees and chose 3 predictor variables at each split. When we plot the model, we see that we obtain the lowest error rate with `r which.min(m1$mse)` trees. 
+
+Because our goal for the random forest was to determine important variables, we did not continue with tuning the random forest and chose to look at the variable importance plot using a slightly modified random forest. 
+
+```{r random forest modified}
+m2 <- randomForest(
+  formula = model_form,
+  data    = lm_data[complete.cases(lm_data),],
+  ntree = which.min(m1$mse)
+)
+varImpPlot(m2,type=2)
+
+```
+
+From this plot we see that rt_score (TOMATOMETER score from Rotten Tomatoes) is highly influential in determining imdb_score (rating from IMDb), followed by actor_score1, year (of release), actor_score2, and actor_score3. Availability on streaming service was not found to be highly influential in determining IMDb rating.
+
+## Linear Regression
+See section on RShiny Application for details. 
+
 
 # Vizualization
 ```{r, echo = FALSE, warning=FALSE}
@@ -60,6 +102,6 @@ There are four tabs in the upper left that allows you to navigate through the ap
 - future direction
 
 # Contributions 
-Our group collaborated well and distributed work evenly among all members. While all members participated in searching for potential data sets, organizing, drafting and proofreading, Dylan created the RShiny app and organized a shared folder on the biostat computing cluster, Chris cleaned the Kaggle and movie rating data sets and Grace cleaned the actors data set and created a "cast score" to be used in model. 
+Our group collaborated well and distributed work evenly among all members. While all members participated in searching for potential data sets, organizing, drafting and proofreading, Dylan created the RShiny app and organized a shared folder on the biostat computing cluster, Chris cleaned the Kaggle and movie rating data sets, and Grace cleaned the actors data set and created a "cast score" to be used in model. 
 
 - be sure to update and include model
