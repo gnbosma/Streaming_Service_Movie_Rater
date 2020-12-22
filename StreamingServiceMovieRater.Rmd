@@ -11,7 +11,7 @@ pacman::p_load(tidyr, dplyr, ggplot2, gridExtra)
 ```
 
 # Objective 
-The purpose of this project was to both model and visualize IMDb ratings of movies and films currently available for streaming on various online platforms
+The purpose of this project was to both model and visualize IMDb ratings of movies and films currently available for streaming on various online platforms.
 
 # Background
 According to Statista, approximently 74% of homes have access to at least one streaming service in 2019 compared to about 52% in 2015. Additionally, as a result of the COVID-19 pandemic, many consumers have either purchased an additional streaming service subscription or increased time spent streaming. It is clear that movie and TV streaming services are increasing in popularity and are integrated into many of our day to day routines. Just last year, the movie and television streaming industry was valued $42.60 billion USD. Information on the popularity of movies available for streaming is critical to streaming platforms like Netflix, Disney+, Hulu to maintain customer interest in their platform rather than their competitors. 
@@ -107,10 +107,15 @@ An [RShiny Application](https://dylanclark-boucher.shinyapps.io/movie_rater_shin
 
 There are four tabs in the upper left that allows you to navigate through the application; Ratings Filter Tool, Ratings by Category, Score Prediction, and About. The Ratings filter tool presents a histogram and box plot of movie ratings and allows the user to filter based on recommended age of target audience, streaming service, Rotten Tomato Score, and release year and select a preferred choice of graph color and number of bins. 
 The second tab, Ratings By Category, presents three sections for visualizing IMDb scores across different variables. The user can see ratings distributions for each streaming platform and each age group, as well as a scatterplot of IMDb ratings by Tomatometer scores.
-The third tab, Score Prediction, shows the coefficient estimates of a linear model for predicting IMDb scores based on streaming platform. The user can additionally select other variables to be included as coviariates, such as release year, Tomatometer score, age rating, and cast score.   The final tab, About, briefly summarizes the background, application, model, and contributors.  
+The third tab, Score Prediction, shows the coefficient estimates of a linear model for predicting IMDb scores based on streaming platform. The user can additionally select other variables to be included as coviariates, such as release year, Tomatometer score, age rating, and cast score.   The final tab, About, briefly summarizes the background, application, model, and contributors. Code for the application can be found under the folder Movie_Rater_Shiny on our GitHub page (link appended).
 
 # Discussion 
 As mentioned in the prediction section, the Tomatometer score is highly influential in determining the rating from IMDb as shown by the RandomForest model. Actor score 1, year of release, actor score 2 and actor score 3 followed in prediction capabilities. In the linear regression model, a fairly similar conclusion was reached. Tomatometer score remains to be influential and significant as well as age groups and release year. If each actor score is added to the linear model individually, we see that actor score 1 and actor score 2 appear to be significant but have low magnitude estimates. Going forward, it may be interesting to consider the impact of variables like genre or country of release could have on ratings. Similarly, it may be interesting to explore the relationship of the cast outside of actors, for example, roles like directors, writers, producers could have on the ratings of a particular movie.
 
 # Contributions 
 Our group collaborated well and distributed work evenly among all members. While all members participated in searching for potential datasets, organizing, drafting and proofreading, Dylan created the RShiny app, organized a shared folder on the biostat computing cluster, and explored the linear regression model. Chris cleaned the Kaggle and movie rating datasets and developed the random forest model. Grace cleaned the actors dataset and created a "cast score" to be used in modeling. 
+
+# GitHub
+Code and data for this project are available on our GitHub page: https://github.com/gnbosma/Streaming_Service_Movie_Rater
+
+
