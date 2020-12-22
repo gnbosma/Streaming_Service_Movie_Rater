@@ -89,7 +89,7 @@ gridExtra::grid.arrange(imdb_p, rt_p, ncol=2)
 - not married to these plots just figured we should show something 
 
 
-```{r rt vs imdb, message = F}
+```{r rt vs imdb, message = F, warning = F}
 
 streaming_services = c("hulu (n = 332)", "disneyplus (n = 260)", "netflix (n = 1421)", "amazonprime (n = 5527)")
 
@@ -100,11 +100,18 @@ lm_data = lm_data %>%
                                  availability))
           
 
-ggplot (data = lm_data) +
-  geom_point (aes (x = rt_score, y = imdb_score, color = availability), alpha = 0.7) +
-  facet_wrap(~availability) +
+lm_data %>%
+  group_by (availability) %>%
+  mutate (mean_imdb = mean (imdb_score, na.rm = T)) %>%
+  ungroup() %>%
+  ggplot ( aes (x = rt_score, y = imdb_score, color = availability, group = availability)) +
+  geom_point ( alpha = 0.7) +
+  geom_hline(aes(yintercept=mean_imdb)) +
+  facet_wrap(~availability, nrow = 2) +
   theme_bw() +
-  ggtitle("Association of Rotten Tomatoes Score vs. IMDb Score")
+  labs(title = "Association of Rotten Tomatoes Score vs. IMDb Score",
+       subtitle = "Horizontal Line at mean imdb_score") + 
+  theme(legend.position = "none")
   
 ```
 
