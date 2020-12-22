@@ -112,7 +112,7 @@ shinyUI(fluidPage(
                              fluidRow(column(10, offset = 1, 
                                       "Below are the distributions of movie ratings for each streaming service.", 
                                       "Our dataset contained 287 movies from Disney+, 499 from Hulu, 1,629 from Netflix,", 
-                                      "and 5,858 from Amazon Prime Video, for a total of 8,970 unique films. Note that, since some",
+                                      "and 5,858 from Amazon Prime Video, for a total of 7,883 unique films. Note that, since some",
                                       "movies might be available on more than one platform, these groupings",
                                       "are not mutually exclusive. Overall, differences in IMDb Ratings across streaming",
                                       "platforms appear to be small.")),
